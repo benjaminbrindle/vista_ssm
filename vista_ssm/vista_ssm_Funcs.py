@@ -235,7 +235,7 @@ def initializationmethod(how,param_dic,dataset,time_points):
         )
     
 
-def runMLGSSM(how,param_dic,dataset,time_points,**kwargs):
+def runVISTA(how,param_dic,dataset,time_points,**kwargs):
     """helper function to run EMLGSSM algorithm
 
     Parameters
