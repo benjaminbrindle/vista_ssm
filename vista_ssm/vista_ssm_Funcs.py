@@ -240,7 +240,7 @@ def runVISTA(how,param_dic,dataset,time_points,**kwargs):
 
     Parameters
     ----------
-    how: bool
+    how: string
         which method to use for initializing the parameters:
             random: chooses random parameters within a specific range
             ident: chooses parameters as identity matrices or close to them
