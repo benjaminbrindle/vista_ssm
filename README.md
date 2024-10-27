@@ -53,8 +53,41 @@ runVISTA(how,param_dic,dataset,time_points,**kwargs):
 
     time_points: ndarray(n_samples,n_time)
         times corresponding to each observation in dataset
+
+    Returns
+    -------
+    dic
+        dictionary of results:
+            parameter - final parameters of misture of LGSSMs
+            label - cluster memberships of each time series
 """
 ```
+
+To illustrate this with a concrete example, we run the following code:
+```
+import numpy as np
+from vista_ssm import vista_ssm_Funcs as vista
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+mpl.rcParams['figure.dpi']=600
+data=np.array([np.array([[[0]],[[0.5]],[[0.8]]]),np.array([[[1]],[[.9]],[[.8]],[[0.7]]])],dtype=object)
+tp=np.array([np.array([0,0.3,0.8]),np.array([0,0.1,0.3,1])],dtype=object)
+param_dic={'DIM_X': 2,
+           'DIM_Y': 1,
+           'NUM_DATA': 2,
+           'N_CLUSTER' : 2,
+           'NUM_CPU' : 1,
+           'FIX' : [],
+           'NUM_LGSSM' : 30,
+           'MAX_ITER' : 1000,
+           'EPSILON' : 0.1,
+           'BIC' : True}
+result=vista.runVISTA('random',param_dic,data,tp)
+vista.predicted_trajectories(result['parameter'],data,result['label'],30,plotcolor=(plt.cm.winter,0,0.8,0.3),timepoints=tp)
+```
+Which returns the number of iterations until the stopping tolerance was achieved and a plot of the data against the fitted LGSSMs.
+![VISTA Example](https://github.com/benjaminbrindle/vista_ssm/blob/main/example.png)
+
 Within the experiments folder we provide several Jupyter notebooks showcasing VISTA and demonstrating its ease of use in practical settings. In the data folder we have collected the open-source datasets used in our panel[^2], epidemiological[^3], and ecological momentary assessment[^4] data examples for ease of reproducibility. We have compiled our results from running VISTA on each of these datasets in the results folder.
 
 [^1]: [Umatani, R., Imai, T., Kawamoto, K., & Kunimasa, S. (2023). Time series clustering with
