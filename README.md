@@ -90,8 +90,6 @@ tp=np.array([np.array([0,0.3,0.8]),      # 3 Time points for first trajectory
              dtype=object)
 
 # Define data values for each time point
-# First trajectory:  values = [0, 0.5, 0.8]
-# Second trajectory: values = [1, 0.9, 0.8, 0.7]
 data=np.array([np.array([[[0]],[[0.5]],[[0.8]]]),     # Values for first trajectory
                np.array([[[1]],[[.9]],[[.8]],[[0.7]]])], # Values for second trajectory
                dtype=object)   
