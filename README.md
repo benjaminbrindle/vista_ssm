@@ -43,13 +43,13 @@ runVISTA(how,param_dic,dataset,time_points,**kwargs):
         - DIM_X : int
             Dimension of the latent state space
         - DIM_Y : int
-            Dimension of observation space: numbers of features/variables from data
+            Number of features/variables from data
         - N_CLUSTER : int
-            Number of clusters to identify
+            Clusters to identify
         - NUM_CPU : int
-            Number of CPU cores (parallel processing)
+            CPU cores used in parallel processing
         - FIX : list
-            Parameters to keep fixed during optimization. Options:
+            Parameter to keep fixed during optimization. Options:
             ['mu', 'P', 'A', 'Gamma', 'C', 'Sigma']
             Empty list means all parameters are optimized
         - NUM_LGSSM : int
