@@ -44,9 +44,10 @@ runVISTA(how,param_dic,dataset,time_points,**kwargs):
             N_CLUSTER - number of clusters
             NUM_CPU - number of processors to run on
             FIX - list of parameters to be fixed throughout algorithm
-            NUM_LGSSM - number of lgssms to use in kmeans initialization for each time series
-            MAX_ITER - maximum number of iterations to run algorithm before termination
-            EPSILON - stopping tolerance used to evaluate absolute difference among parameters between steps
+                  adding 'mu', 'P', 'A', 'Gamma', 'C', and 'Sigma' to the list will keep the respective parameters fixed to their initialized value
+            NUM_LGSSM - number of lgssms to use in kmeans initialization for each time series (used 30 in experiments)
+            MAX_ITER - maximum number of iterations to run algorithm before termination (used 500 or 1000 in experiments)
+            EPSILON - stopping tolerance used to evaluate absolute difference among parameters between steps (used 0.1 in experiments)
             BIC - bool of whether to output information criteria
             
     dataset: ndarray(n_samples,n_time,dim_y,1)
@@ -102,7 +103,6 @@ param_dic={'DIM_X': 2,
            'N_CLUSTER' : 2,
            'NUM_CPU' : 1,
            'FIX' : [],
-           'NUM_LGSSM' : 30,
            'MAX_ITER' : 1000,
            'EPSILON' : 0.1,
            'BIC' : True}
