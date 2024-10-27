@@ -124,9 +124,9 @@ vista.predicted_trajectories(
     result['parameter'],    # Learned model parameters
     data,                   # Input data
     result['label'],        # Cluster assignments
-    30,                     # ???
+    30,                     # Number of points to plot from trajectory created from learned parameters over the interval [0,1]
     plotcolor=(plt.cm.winter,0,0.8,0.3),  # Color scheme
-    timepoints=tp           # Time points of data
+    timepoints=tp           # Time points of input data
 )
 ```
 Which returns the number of iterations until the stopping tolerance was achieved and a plot of the data against the fitted LGSSMs.
