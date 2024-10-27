@@ -99,7 +99,6 @@ data=np.array([np.array([[[0]],[[0.5]],[[0.8]]]),     # Values for first traject
 # Define model parameters
 param_dic={'DIM_X': 2,
            'DIM_Y': 1,
-           'NUM_DATA': 2,
            'N_CLUSTER' : 2,
            'NUM_CPU' : 1,
            'FIX' : [],
