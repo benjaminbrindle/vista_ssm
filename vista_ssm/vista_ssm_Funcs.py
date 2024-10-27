@@ -492,6 +492,8 @@ def predicted_trajectories(params,data,label,T,T_final=1,num_sam=3,legend=False,
         List of length n_samples corresponding to names for the given time series
     ylim: list (optional)
         List of form [ymin, ymax] setting the bounds of the plots
+    timepoints: np.ndarray(n_samples,nobservations) (optional)
+        Observed data observation timestamps  - n_observations can vary among samples. If not provided, assumes uniform sampling on xplot.
     """
 
     dy=len(params['Sigma'][0])
@@ -509,8 +511,13 @@ def predicted_trajectories(params,data,label,T,T_final=1,num_sam=3,legend=False,
         if 'true' in kwargs:
             true_params=kwargs['true']
             true_X=noiseless_trajectory(true_params,T,T_final)
+        if 'timepoints' in kwargs:
+            tp=kwargs['timepoints']
+        else:
+            tp=np.array([np.linspace(xplot[0],xplot[1],len(d)) for d in data],dtype=object)
     else:
         features=['Feature '+str(i) for i in range(dy)]
+        tp=np.array([np.linspace(xplot[0],xplot[1],len(d)) for d in data],dtype=object)
      
     sim_X=noiseless_trajectory(params,T,T_final)
 
@@ -525,9 +532,9 @@ def predicted_trajectories(params,data,label,T,T_final=1,num_sam=3,legend=False,
             for l in range(num_sam_list[k]):
                 X=data[real_ind[k][l]]
                 if legend:
-                    ax.plot(np.linspace(xplot[0],xplot[1],len(X[:,i])),X[:,i],label=row_labels[real_ind[k][l]],alpha=plotcolor[3])
+                    ax.plot(tp[real_ind[k][l]],X[:,i],label=row_labels[real_ind[k][l]],alpha=plotcolor[3])
                 else:
-                    ax.plot(np.linspace(xplot[0],xplot[1],len(X[:,i])),X[:,i],label='_nolegend_',alpha=plotcolor[3])
+                    ax.plot(tp[real_ind[k][l]],X[:,i],label='_nolegend_',alpha=plotcolor[3])
             for l,j in enumerate(ax.lines):
                 colormap = plotcolor[0]
                 colors = [colormap(i) for i in np.linspace(plotcolor[1], plotcolor[2], len(ax.lines))]
