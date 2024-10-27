@@ -32,35 +32,64 @@ runVISTA(how,param_dic,dataset,time_points,**kwargs):
 
     Parameters
     ----------
-    how: string
-        which method to initialize the parameters:
-            random: chooses random parameters within a specific range
-            ident: chooses parameters as identity matrices or close to them
-            kmeans: uses kmeans on the data to choose parameters
-    param_dic: dic
-        parameters used:
-            DIM_X - dimension of latent variable
-            DIM_Y - number of features of observation
-            N_CLUSTER - number of clusters
-            NUM_CPU - number of processors to run on
-            FIX - list of parameters to be fixed throughout algorithm
-                  adding 'mu', 'P', 'A', 'Gamma', 'C', and 'Sigma' to the list will keep the respective parameters fixed to their initialized value
-            NUM_LGSSM - number of lgssms to use in kmeans initialization for each time series (used 30 in experiments)
-            MAX_ITER - maximum number of iterations to run algorithm before termination (used 500 or 1000 in experiments)
-            EPSILON - stopping tolerance used to evaluate absolute difference among parameters between steps (used 0.1 in experiments)
-            BIC - bool of whether to output information criteria
+    how : str
+        Method for parameter initialization. Options:
+        - 'random': Initialize parameters randomly within specified ranges
+        - 'ident': Initialize parameters as identity matrices or near-identity
+        - 'kmeans': Use k-means clustering on data to initialize parameters
+
+    param_dic : dict
+        Dictionary of model parameters:
+        - DIM_X : int
+            Dimension of the latent state space
+        - DIM_Y : int
+            Dimension of observation space: numbers of features/variables from data
+        - N_CLUSTER : int
+            Number of clusters to identify
+        - NUM_CPU : int
+            Number of CPU cores (parallel processing)
+        - FIX : list
+            Parameters to keep fixed during optimization. Options:
+            ['mu', 'P', 'A', 'Gamma', 'C', 'Sigma']
+            Empty list means all parameters are optimized
+        - NUM_LGSSM : int
+            Only for kmeans initialization. Number of LGSSMs per time series.
+            (default used in experiments: 30)
+        - MAX_ITER : int
+            Maximum number of EM iterations before forced termination
+            (default used in experiments: 500 or 1000)
+        - EPSILON : float
+            Convergence threshold for parameter updates
+            Algorithm stops when absolute parameter changes < EPSILON
+            (default used in experiments: 0.1)
+        - BIC : bool
+            Whether to output Bayesian Information Criterion
             
-    dataset: ndarray(n_samples,n_time,dim_y,1)
+    dataset : numpy.ndarray
+        Time series data with shape (n_samples, n_time, dim_y, 1)
+        - n_samples: Number of time series in dataset
+        - n_time: Number of time points per series
+        - dim_y: Dimension of observations
+        - Last dimension must be 1
 
-    time_points: ndarray(n_samples,n_time)
-        times corresponding to each observation in dataset
+    time_points : numpy.ndarray
+        Observation times for each time series (n_samples, n_time)
+        - n_samples: Number of time series in dataset
+        - n_time: Times for each observation in dataset
 
-    Returns
+       
+    **kwargs : dict, optional
+        Additional keyword arguments (currently unused)
+
+   Returns
     -------
-    dic
-        dictionary of results:
-            parameter - final parameters of misture of LGSSMs
-            label - cluster memberships of each time series
+    dict
+        Results dictionary containing:
+        - 'parameter' : dict
+            Final fitted parameters of the mixture of LGSSMs
+        - 'label' : numpy.ndarray
+            Cluster assignments of each time series
+
 """
 ```
 
