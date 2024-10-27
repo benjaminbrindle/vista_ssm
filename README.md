@@ -75,10 +75,7 @@ import numpy as np                                  # NumPy for numerical comput
 from vista_ssm import vista_ssm_Funcs as vista      # VISTA-SSM
 import matplotlib.pyplot as plt                     # Matplotlib for plotting
 import matplotlib as mpl                            # Matplotlib base library
-
-# Set high DPI for better quality figures
-mpl.rcParams['figure.dpi']=600                    
-
+             
 
 #===============================
 # Generate example data
@@ -118,6 +115,10 @@ result=vista.runVISTA('random',param_dic,data,tp)
 #===============================
 # Visualize Results
 #===============================
+
+# Set high DPI for better quality figures
+mpl.rcParams['figure.dpi']=600    
+
 # Plot predicted trajectories and observed data 
 vista.predicted_trajectories(
     result['parameter'],    # Learned model parameters
