@@ -71,7 +71,8 @@ Time series data with shape `(n_samples, n_time, dim_y, 1)`:
    - `n_samples`: Number of time series in dataset
    - `n_time`: Number of time points per series
    - `dim_y`: Dimension of observations
-   - Last dimension must be 1
+   - `1` : Data should have a "channel" dimension of size 1
+        - If you have data with shape `(n_samples, n_time, n_features)`, you need to reshape it to `(n_samples, n_time, n_features, 1)`
 
 #### **`time_points`** 
 Observation times for each time series `(n_samples, n_time)`
