@@ -1,4 +1,4 @@
-# VISTA-SSM: Varying and Irregular Sampling Time-series Analysis via State Space Models
+# VISTA: Varying and Irregular Sampling Time-series Analysis
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/benjaminbrindle/vista_ssm/blob/main/LICENSE)
 
