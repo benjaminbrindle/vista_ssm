@@ -28,7 +28,7 @@ pip install -e vista_ssm
 We have compiled a number of useful helper functions to interface directly with the VISTA algorithm. For instance, one can run the VISTA algorithm by simply running the function:
 ```python
 runVISTA(how,param_dic,dataset,time_points,**kwargs):
-    """helper function to run EMLGSSM algorithm
+    """helper function to run the VISTA algorithm
 
     Parameters
     ----------
@@ -78,8 +78,12 @@ runVISTA(how,param_dic,dataset,time_points,**kwargs):
         - n_time: Times for each observation in dataset
 
        
-    **kwargs : dict, optional
-        Additional keyword arguments (currently unused)
+    **kwargs : optional arguments
+        inits: dict
+            dictionary of lists of parameters to initialize the algorithm directly (skipping the 'how' parameter)
+        
+        labels: numpy.ndarray(n_samples)
+            ground truth labels to compare clustering performance to; if provided, prints confusion matrix
 
    Returns
     -------
