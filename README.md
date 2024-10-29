@@ -26,7 +26,7 @@ The algorithmic structure of VISTA is sketched in the schematic above. For more 
 
 ## Installation 
 ```bash
-git clone git@github.com:benjaminbrindle/vista_ssm.git
+git clone https://github.com/benjaminbrindle/vista_ssm
 pip install -e vista_ssm
 ```
 
