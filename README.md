@@ -166,7 +166,7 @@ The experiments folder contains several Jupyter notebooks showcasing VISTA and d
 
 In the data folder we have collected the open-source datasets used in our panel[^3], epidemiological[^4], and ecological momentary assessment[^5] data examples for ease of reproducibility. We have compiled our results from running VISTA on each of these datasets in the results folder.
 
-[^1]: [Brindle, B., Hull, T.D., Malgaroli, M.†, & Charon, N.† (2024) VISTA-SSM: Varying and Irregular Sampling Time-series Analysis via State Space Models. arXiv preprint:](https://arxiv.org/abs/2410.21527)
+[^1]: [Brindle, B., Hull, T.D., Malgaroli, M.†, & Charon, N.† (2024) VISTA-SSM: Varying and Irregular Sampling Time-series Analysis via State Space Models. arXiv:2410.21527](https://arxiv.org/abs/2410.21527)
 
 [^2]: [Umatani, R., Imai, T., Kawamoto, K., & Kunimasa, S. (2023). Time series clustering with
 an em algorithm for mixtures of linear gaussian state space models. Pattern
