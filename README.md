@@ -4,7 +4,7 @@
 
 We introduce VISTA, a Python tool based on the algorithm described in _VISTA-SSM: Varying and Irregular Sampling Time-series Analysis via State Space Models_.[^1] 
 
-Real world time series data, particularly in the psychological sciences, is often characterized by irregular or ill-structured intervals. This challenge often emerges when exploring temporal data without clear prior categorical information about the subjects in a population. VISTA provides a new method for handling these sampling issues while performing unsupervised identification of groups (clustering) in such datasets.
+Time series data, particularly in the psychological sciences, is often characterized by irregular or missing data intervals. VISTA provides a new method for handling these sampling issues while performing unsupervised identification of groups (clustering) in such datasets.
 
 We hope that VISTA will be an accessible and valuable tool for researchers to handle the challenges of healthcare and mental health data.
 
@@ -58,11 +58,12 @@ Dictionary of model parameters:
         - Options: `['mu', 'P', 'A', 'Gamma', 'C', 'Sigma']`
         - Empty list means all parameters are optimized           
    - `NUM_LGSSM` : Number of LGSSMs per time series.
-        - Only for kmeans initialization. 
+        - Only for kmeans initialization (`how = 'kmeans'`). 
         - (default used in our experiments: 30)
    - `MAX_ITER` : Maximum number of EM iterations before forced termination
         - (default used in our experiments: 500 or 1000)
-   - `EPSILON` : Convergence threshold for parameter updates. Algorithm stops when absolute parameter changes < EPSILON
+   - `EPSILON` : Convergence threshold for parameter updates.
+        - Algorithm stops when absolute parameter < EPSILON
         - (default used in our experiments: 0.1)
    - `BIC` : Whether to output the Bayesian Information Criterion (`True` `False`)
             
@@ -162,9 +163,11 @@ Which returns the number of iterations until the stopping tolerance was achieved
 
 ## More Examples
 
-The experiments folder contains several Jupyter notebooks showcasing VISTA and demonstrating its ease of use in practical settings. 
+The ![experiments folder](https://github.com/benjaminbrindle/vista_ssm/tree/main/experiments) contains several Jupyter notebooks showcasing VISTA and demonstrating its ease of use in practical settings. 
 
-In the data folder we have collected the open-source datasets used in our panel[^3], epidemiological[^4], and ecological momentary assessment[^5] data examples for ease of reproducibility. We have compiled our results from running VISTA on each of these datasets in the results folder.
+In the data folder we have collected the open-source datasets used in our panel[^3], epidemiological[^4], and ecological momentary assessment[^5] data examples for ease of reproducibility. 
+
+We have compiled our results from running VISTA on each of these datasets in the ![results folder](https://github.com/benjaminbrindle/vista_ssm/tree/main/results).
 
 [^1]: [Brindle, B., Hull, T.D., Malgaroli, M.†, & Charon, N.† (2024) VISTA-SSM: Varying and Irregular Sampling Time-series Analysis via State Space Models. arXiv:2410.21527](https://arxiv.org/abs/2410.21527)
 
