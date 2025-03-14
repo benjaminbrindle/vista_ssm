@@ -430,6 +430,7 @@ def summarystats(label_true,label_predicted,m):
     total1=sum(sum(cm1))
     accuracy1=(sum(np.diag(cm1)))/total1
     print ('Accuracy : ', accuracy1)
+    print('Adjusted Rand Index : ', sklearn.metrics.adjusted_rand_score(label_true,labels_pred))
     if len(cm)==2:
         print('ROC AUC: ', sklearn.metrics.roc_auc_score(label_true,labels_pred))
     # else:
@@ -549,7 +550,7 @@ def predicted_trajectories(params,data,label,T,T_final=1,num_sam=3,legend=False,
     plt.show()
 
 def agg_perf(loc,clus,dims,post=1,std=[True,True],criteria=list(range(4)),label=np.empty(0)):
-    """Prints tables of the information criteria and cluster similarity for given runs of mlgssm algorithm
+    """Prints tables of the information criteria, cluster similarity, and ARI for given runs of mlgssm algorithm
 
     Parameters
     ----------
@@ -562,7 +563,7 @@ def agg_perf(loc,clus,dims,post=1,std=[True,True],criteria=list(range(4)),label=
     post: int 
         How  many runs of the algorithm for each (n_cluster,dim_x) pair to compute
     std: List
-        First position = True prints standard deviation of information criterion, second position = True prints standard deviation of accuracy
+        First position = True prints standard deviation of information criterion, second position = True prints standard deviation of accuracy and ARI
     criteria: List 
         Default [0,1,2,3] corresponding to printing all of BIC, ABIC, AIC, AICc, subsets of this list will print only the corresponding criteria
     label: np.ndarray
@@ -570,6 +571,7 @@ def agg_perf(loc,clus,dims,post=1,std=[True,True],criteria=list(range(4)),label=
     """
     ic=[]
     ac=[]
+    ari=[]
     crit=['BIC','ABIC','AIC','AICc']
     for dx in dims:
         for nc in clus:
@@ -586,6 +588,7 @@ def agg_perf(loc,clus,dims,post=1,std=[True,True],criteria=list(range(4)),label=
                     total=sum(sum(cmp))
                     accuracy=(sum(np.diag(cmp)))/total
                     ac.append(accuracy)
+                    ari.append(sklearn.metrics.adjusted_rand_score(label,r['label']))
     n=len(clus)
     d=len(dims)
     
@@ -593,12 +596,12 @@ def agg_perf(loc,clus,dims,post=1,std=[True,True],criteria=list(range(4)),label=
     info_std=np.array([np.std(np.array(ic)[post*i:post*(i+1)],axis=0) for i in range(n*d)])
         
     print('Information Criteria:')
-    for c_n, c in enumerate(criteria):
+    for c in criteria:
         print('\n'+crit[c]+':')
         if std[0]:
-            info=np.array([f'{info_mean[i,c_n]:.2E}'+f' ({info_std[i,c_n]:.2f})' for i in range(n*d)]).reshape((d,n))
+            info=np.array([f'{info_mean[i,c]:.2E}'+f' ({info_std[i,c]:.2f})' for i in range(n*d)]).reshape((d,n))
         else:
-            info=np.array([f'{info_mean[i,c_n]:.2E}' for i in range(n*d)]).reshape((d,n))
+            info=np.array([f'{info_mean[i,c]:.2E}' for i in range(n*d)]).reshape((d,n))
         print(pd.DataFrame(data=info,columns=clus,index=dims))
     if label.size > 0:
         ac_mean=[np.mean(np.array(ac)[post*i:post*(i+1)],axis=0) for i in range(n*d)]
@@ -608,4 +611,13 @@ def agg_perf(loc,clus,dims,post=1,std=[True,True],criteria=list(range(4)),label=
             info=np.array([f'{ac_mean[i]:.2f}'+f' ({ac_std[i]:.2f})' for i in range(n*d)]).reshape((d,n))
         else:
             info=np.array([f'{ac_mean[i]:.2f}' for i in range(n*d)]).reshape((d,n))
+        print(pd.DataFrame(data=info,columns=clus,index=dims))
+
+        ari_mean=[np.mean(np.array(ari)[post*i:post*(i+1)],axis=0) for i in range(n*d)]
+        ari_std=[np.std(np.array(ari)[post*i:post*(i+1)],axis=0) for i in range(n*d)]
+        print('\nAdjusted Rand Index:')
+        if std[1]:
+            info=np.array([f'{ari_mean[i]:.2f}'+f' ({ari_std[i]:.2f})' for i in range(n*d)]).reshape((d,n))
+        else:
+            info=np.array([f'{ari_mean[i]:.2f}' for i in range(n*d)]).reshape((d,n))
         print(pd.DataFrame(data=info,columns=clus,index=dims))
