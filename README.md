@@ -161,6 +161,30 @@ vista.predicted_trajectories(
 Which returns the number of iterations until the stopping tolerance was achieved and a plot of the data against the fitted LGSSMs.
 ![VISTA Example](https://github.com/benjaminbrindle/vista_ssm/blob/main/example.png)
 
+## Temporal Network Visualization
+
+The parameters VISTA learns can be used to generate temporal networks for each cluster by running the following code using the `result` obtained above.
+```python
+vista.temporal_network(
+         result, #dictionary output from VISTA algorithm
+         features, #labels for the nodes in the temporal network corresponding to the features in the observed data
+         cluster_labels #labels for the clusters given by the VISTA output
+)
+```
+To modify the temporal network graphical layout, entering different integer values for `seed` changes the random seed used to general the graph (default 1). 
+
+The following code provides a method for plotting the out-expected influence using a translation of the qgraph package in R.
+```python
+vista.out_expected_influence(
+         result, #dictionary output from VISTA algorithm
+         features, #labels for the nodes in the temporal network corresponding to the features in the observed data
+         cluster_labels #labels for the clusters given by the VISTA output
+)
+```
+In both of the above functions, to control the resolution, use `dpi` (default 300), and to save the plot to a file, use `filename` (does not save to file by default). To illustrate these outputs, we show them for the ecological momentary assessment data[^5] explored in more detail in the Examples section below.
+<table><tr><td><img src="https://github.com/benjaminbrindle/vista_ssm/blob/main/EMA_TemporalNetwork.png"></td><td><img src="https://github.com/benjaminbrindle/vista_ssm/blob/main/EMA_OutExpectedInfluence.png"></td></tr></table>
+The temporal network code is shown in action in the example notebooks for ecological momentary assessment data and wearable data below.
+
 ## More Examples
 
 The ![experiments folder](https://github.com/benjaminbrindle/vista_ssm/tree/main/experiments) contains several Jupyter notebooks showcasing VISTA and demonstrating its ease of use in practical settings. 
