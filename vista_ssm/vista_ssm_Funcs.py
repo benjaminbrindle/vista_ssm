@@ -9,6 +9,7 @@ from time import process_time
 import pickle
 from scipy.optimize import linprog
 import sklearn.datasets
+import networkx as nx
 
 from vista_ssm import EMmlgssm, InitEMmlgssm, EMlgssm
 
@@ -621,3 +622,256 @@ def agg_perf(loc,clus,dims,post=1,std=[True,True],criteria=list(range(4)),label=
         else:
             info=np.array([f'{ari_mean[i]:.2f}' for i in range(n*d)]).reshape((d,n))
         print(pd.DataFrame(data=info,columns=clus,index=dims))
+
+def centrality(
+    W,
+    alpha=1,
+    posfun=np.abs,
+    pkg="igraph",
+    all_shortest_paths=False,
+    weighted=True,
+    signed=True,
+    R2=False
+):
+    """
+    Python translation of R's qgraph::centrality()
+    -------------------------------------------------
+    W : numpy array
+        Directed adjacency matrix (weights allowed)
+    alpha : float
+        Exponent for degree-weighted centrality
+    posfun : function
+        Function to transform weights (abs by default)
+    pkg : str
+        "igraph" or "qgraph" behavior (only "igraph" behavior implemented)
+    all_shortest_paths : bool
+        If True computes full shortest-path lists
+    weighted : bool
+        If False uses unweighted edges
+    signed : bool
+        If False uses absolute weights
+    R2 : bool
+        If True computes GGM-based R2 measure
+    """
+
+    # Copy matrix
+    W = np.array(W, dtype=float)
+    n = W.shape[0]
+
+    # If not weighted -> binarize
+    if not weighted:
+        W = np.sign(W)
+
+    # If not signed -> absolute value
+    if not signed:
+        W = np.abs(W)
+
+    # Remove self-loops
+    np.fill_diagonal(W, 0)
+
+    ### --- BASIC ADJACENCY ---
+    X = (W != 0).astype(int)
+
+    ### --- OUT DEGREE ---
+    unweighted_out = X.sum(axis=1)
+    weighted_out = posfun(W).sum(axis=1)
+    combined_out = (unweighted_out ** (1 - alpha)) * (weighted_out ** alpha)
+
+    ### --- IN DEGREE ---
+    unweighted_in = X.sum(axis=0)
+    weighted_in = posfun(W).sum(axis=0)
+    combined_in = (unweighted_in ** (1 - alpha)) * (weighted_in ** alpha)
+
+    ### --- EXPECTED INFLUENCE ---
+    out_expected = W.sum(axis=1)
+    in_expected = W.sum(axis=0)
+
+    ### ---------------------------------------------
+    ### GRAPH SETUP FOR SHORTEST PATH METRICS
+    ### ---------------------------------------------
+    # Distances = 1 / |w|^alpha
+    D = np.zeros_like(W)
+    mask = posfun(W) != 0
+    D[mask] = 1.0 / (posfun(W)[mask] ** alpha)
+    D[~mask] = np.inf
+
+    # Build directed weighted graph
+    G = nx.DiGraph()
+    for i in range(n):
+        for j in range(n):
+            if np.isfinite(D[i, j]) and D[i, j] != 0:
+                G.add_edge(i, j, weight=D[i, j])
+
+    # --- Closeness (directed)
+    closeness = np.array([nx.closeness_centrality(G, u=i, distance="weight") for i in range(n)])
+
+    # --- Betweenness
+    betw = np.array(list(nx.betweenness_centrality(G, weight="weight", normalized=False).values()))
+
+    # --- Shortest path length matrix ---
+    shortest_matrix = np.full((n, n), np.inf)
+    for i in range(n):
+        lengths = nx.single_source_dijkstra_path_length(G, i, weight="weight")
+        for j, d in lengths.items():
+            shortest_matrix[i, j] = d
+
+    # --- List all shortest paths ---
+    shortest_paths = [[[] for _ in range(n)] for __ in range(n)]
+    if all_shortest_paths:
+        for i in range(n):
+            for j in range(n):
+                if np.isfinite(shortest_matrix[i, j]) and i != j:
+                    shortest_paths[i][j] = list(nx.all_shortest_paths(G, source=i, target=j, weight="weight"))
+
+    ### ------------------------------------------------
+    ### R2 METRIC (GGM-like) -- optional
+    ### ------------------------------------------------
+    R2_res = None
+    if R2:
+        K = np.eye(n) - W
+        if not (np.allclose(K, K.T) and np.all(np.linalg.eigvals(K) > 0)):
+            raise ValueError("Matrix does not appear to be a valid GGM precision matrix.")
+
+        # convert to standardized covariance inverse
+        K_inv = np.linalg.inv(K)
+        K_std = np.linalg.inv((1 / np.sqrt(np.diag(K_inv)))[:, None] * K_inv * (1 / np.sqrt(np.diag(K_inv)))[None, :])
+        R2_res = 1 - 1 / np.diag(K_std)
+
+    ### --- Assemble output ---
+    results = {
+        "OutDegree": combined_out,
+        "InDegree": combined_in,
+        "Closeness": closeness,
+        "Betweenness": betw,
+        "InExpectedInfluence": in_expected,
+        "OutExpectedInfluence": out_expected,
+        "ShortestPathLengths": shortest_matrix,
+        "ShortestPaths": shortest_paths if all_shortest_paths else None
+    }
+
+    if R2:
+        results["R2"] = R2_res
+
+    return results
+
+def adjacency_matrix(result):
+    """helper function that computes the adjacency matrix to be used in network visualization from vista algorithm parameters
+
+    Parameters
+    ----------
+    result: dictionary
+        output from vista algorithm
+
+    Returns
+    -------
+    list
+        list of adjacency matrices for each cluster
+    """
+    mtx=[]
+    for i in range(len(result['parameter']['C'])):
+        A=(result['parameter']['C'][i])@(result['parameter']['A'][i])@np.linalg.pinv(result['parameter']['C'][i])
+        mtx.append(A)
+    return mtx
+
+def temporal_network(result,features,cluster_labels,seed=1,dpi=300,filename=''):
+    """plots temporal network visualization given the result of vista algorithm
+
+    Parameters
+    ----------
+    result: dictionary
+        output from vista algorithm
+    features: list
+        labels for the nodes in the temporal network corresponding to the features in the observed data
+    cluster_labels: list
+        labels for the clusters given by the vista output
+    seed: int, optional
+        random seed for graph layout
+    dpi: int, optional
+        plot resolution
+    filename: string, optional
+        filename to which, if provided, the plot will be saved
+    """
+    mtx=adjacency_matrix(result)
+    layouts = [nx.spring_layout(nx.from_numpy_array(matrix, create_using=nx.DiGraph), seed=seed) for matrix in mtx]
+    n=len(features)
+    m=len(mtx)
+    avg_layout = {
+        node: sum([layout[node] for layout in layouts])/m
+        for node in range(n)
+    }
+
+    fig, axes = plt.subplots(1, m, figsize=(14, 7))
+    
+    for ax, (matrix, title) in zip(axes,[(mtx[i],cluster_labels[i]) for i in range(m)]):
+        G = nx.from_numpy_array(matrix, create_using=nx.DiGraph)
+        edges = G.edges()
+        weights = [matrix[i, j] for i, j in edges]
+        colors = ["#0080FF" if w >= 0 else "#f73a29" for w in weights]
+        wm=max([abs(w) for w in weights])
+        widths = [abs(w)/wm * 5 for w in weights]
+    
+        nx.draw_networkx_nodes(G, pos=avg_layout, node_color="#d9d9d9", node_size=2000, ax=ax)
+        nx.draw_networkx_labels(G, pos=avg_layout,
+                                labels={i: features[i] for i in range(n)},
+                                font_size=14, font_weight='bold', ax=ax)
+        nx.draw_networkx_edges(
+            G, pos=avg_layout,
+            edge_color=colors,
+            width=widths,
+            arrows=True,
+            arrowstyle='-|>', arrowsize=15,
+            connectionstyle='arc3,rad=0.15',
+            ax=ax,
+            node_size=2000
+        )
+    
+        ax.set_title(title, fontsize=16)
+        ax.axis("off")
+    
+    plt.tight_layout()
+    plt.show()
+    if len(filename)>0:
+        plt.savefig(filename, dpi=dpi)
+
+def out_expected_influence(result,features,cluster_labels,dpi=300,filename=''):
+    """plots out-expected influence given the result of vista algorithm, using qgraph's centrality function
+
+    Parameters
+    ----------
+    result: dictionary
+        output from vista algorithm
+    features: list
+        labels for the nodes in the temporal network corresponding to the features in the observed data
+    cluster_labels: list
+        labels for the clusters given by the vista output
+    dpi: int, optional
+        plot resolution
+    filename: string, optional
+        filename to which, if provided, the plot will be saved
+    """
+    mtx=adjacency_matrix(result)
+    influence_dic={"label": features}
+    for i in range(len(cluster_labels)):
+        influence_dic[cluster_labels[i]]=centrality(mtx[i])['OutExpectedInfluence']
+    df = pd.DataFrame(influence_dic)
+    y_positions = np.arange(len(features))
+    
+    plt.figure(figsize=(7, 9))
+    plt.axvline(0, color="gray", linestyle="dashed", linewidth=1)
+
+    for i, label in enumerate(features):
+        vals=[df.loc[df["label"] == label, cl].values[0] for cl in cluster_labels]
+        plt.plot([min(vals), max(vals)], [i, i], color="lightgray", linewidth=2, zorder=1)
+
+    for cl in cluster_labels:
+        plt.scatter(df[cl], y_positions, s=80, label=cl, zorder=2)
+
+    plt.yticks(y_positions, features)
+    plt.xlabel("Out-Expected Influence", fontsize=12)
+    plt.ylabel("")
+    plt.legend(loc="upper center", bbox_to_anchor=(0.5, 1.05), ncol=len(cluster_labels), frameon=False)
+    plt.gca().invert_yaxis()
+    plt.tight_layout()
+    if len(filename)>0:
+        plt.savefig(filename, dpi=dpi)
+    plt.show()
