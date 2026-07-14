@@ -268,6 +268,12 @@ def runVISTA(how,param_dic,dataset,time_points,**kwargs):
         
     labels: ndarray(n_samples), optional
         ground truth labels to compare classification performance to; if provided, prints information
+
+    save : bool, optional
+        If True, save parameters after each iteration to the file location given by loc.
+        
+    loc : string, optional
+        File location to save parameters.
            
     Returns
     -------
@@ -283,6 +289,13 @@ def runVISTA(how,param_dic,dataset,time_points,**kwargs):
             init_params = kwargs['inits']
         else:
             init_params = initializationmethod(how,param_dic,dataset,time_points)
+
+        if 'save' in kwargs and 'loc' in kwargs:
+            save=kwargs['save']
+            loc=kwargs['loc']
+        else:
+            save=False
+            loc=''
     else:
         init_params = initializationmethod(how,param_dic,dataset,time_points)
         
@@ -303,7 +316,9 @@ def runVISTA(how,param_dic,dataset,time_points,**kwargs):
         epsilon=param_dic['EPSILON'], 
         n_cpu=param_dic['NUM_CPU'], 
         fix_param=param_dic['FIX'],
-        bic=param_dic['BIC']
+        bic=param_dic['BIC'],
+        save=save,
+        loc=loc
     )
     result['runtime']=process_time()-start
     if 'labels' in kwargs:
