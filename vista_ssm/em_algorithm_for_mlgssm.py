@@ -1,3 +1,5 @@
+import pickle
+
 import multiprocessing as mp
 import _thread as thread
 import numpy as np
@@ -384,7 +386,7 @@ class EMmlgssm(object):
         return (bic,abic,aic,aicc)
 
 
-    def fit(self, Y, time_points, ux=None, uy=None, max_iter=10, epsilon=0.01, n_cpu=1, fix_param=[], bic=False):
+    def fit(self, Y, time_points, ux=None, uy=None, max_iter=10, epsilon=0.01, n_cpu=1, fix_param=[], bic=False, save=False, location=''):
         """
         Run EM algorithm.
 
@@ -414,6 +416,10 @@ class EMmlgssm(object):
             is fixed (not updated).
         bic : bool, default=False
             If True, compute bic.
+        save : bool, default=False
+            If True, save parameters after each iteration to the file location given by loc.
+        loc : string, default=''
+            File location to save parameters.
         
         Returns
         -------
@@ -471,6 +477,40 @@ class EMmlgssm(object):
             like.append(self.loglikelihoods.sum(axis=0))
             like_total.append(self.loglikelihoods)
 
+            if save:
+                params = {
+                    'weight':self.set_pi, 
+                    'mu':self.set_mu, 
+                    'P':self.set_P,
+                    'A':self.set_A, 
+                    'Gamma':self.set_Gamma,
+                    'C':self.set_C, 
+                    'Sigma':self.set_Sigma
+                }
+
+                if add_input_to_state(self.set_B):
+                    params['B'] = self.set_B
+                if add_input_to_obs(self.set_D):
+                    params['D'] = self.set_D
+
+                # Clustering
+                labels = np.argmax(self.p_prob, axis=1)
+                labels=labels.reshape(-1)
+        
+                results = {
+                    'parameter':params,
+                    'label':labels,
+                    'tolerance':tol,
+                    'likelihood':like,
+                    'total_likelihood':like_total,
+                    'iterations':i
+                }
+
+                if bic:
+                    results['bic'] = self.compute_bic()
+                    
+                with open(loc, 'wb') as f:
+                    pickle.dump(results, f, pickle.HIGHEST_PROTOCOL)
             
             if diff < epsilon:
                 print('Termination tolerance achieved in '+str(i)+' iterations.')
