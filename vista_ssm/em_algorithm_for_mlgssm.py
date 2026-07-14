@@ -386,7 +386,7 @@ class EMmlgssm(object):
         return (bic,abic,aic,aicc)
 
 
-    def fit(self, Y, time_points, ux=None, uy=None, max_iter=10, epsilon=0.01, n_cpu=1, fix_param=[], bic=False, save=False, location=''):
+    def fit(self, Y, time_points, ux=None, uy=None, max_iter=10, epsilon=0.01, n_cpu=1, fix_param=[], bic=False, save=False, loc=''):
         """
         Run EM algorithm.
 
