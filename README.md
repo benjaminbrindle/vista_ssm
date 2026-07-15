@@ -87,6 +87,10 @@ Optional arguments
         
    - `labels:` : ground truth labels to compare clustering performance to; if provided, prints confusion matrix
 
+   - `save:` : if `True`, saves model state after every iteration
+
+   - `loc` : file location to which the model state will be saved if `save = True`
+
 ### Returns
 **`dict`** 
 Results dictionary containing:
@@ -137,8 +141,11 @@ param_dic={'DIM_X': 2,
            'EPSILON' : 0.1,
            'BIC' : True}
 
+# If you want to save the model state after every iteration of the algorithm
+location='test.pickle'
+
 # Run VISTA with random parameter initialization
-result=vista.runVISTA('random',param_dic,data,tp)
+result=vista.runVISTA('random',param_dic,data,tp,save=True,loc=location)
 
 
 #===============================
