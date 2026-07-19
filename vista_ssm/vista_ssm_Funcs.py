@@ -165,7 +165,7 @@ def mlgssmSample(N_list,params,T,varT,T_diff=2,**kwargs):
 
 
 #MLGSSM initialization
-def initializationmethod(how,param_dic,dataset,time_points):
+def initializationmethod(how,param_dic,dataset,time_points,**kwargs):
     """generates initial parameters for EMLGSSM algorithm
 
     Parameters
@@ -188,11 +188,20 @@ def initializationmethod(how,param_dic,dataset,time_points):
     time_points: ndarray(n_samples,n_time), optional for kmeans initialization
         times corresponding to each observation in dataset
 
+    control: ndarray(n_samples,n_time,dim_u,1), optional
+        control input if given
+
     Returns
     -------
     dic
         dictionary of lists of parameters. size of list depends on 'N_CLUSTER' in param_dic
     """
+    control=[]
+    du=0
+    if kwargs:
+        if 'control' in kwargs:
+            control=kwargs['control']
+            du=control[0][0].shape[0]
     dx=param_dic['DIM_X']
     dy=param_dic['DIM_Y']
     n_cluster=param_dic['N_CLUSTER']
@@ -204,9 +213,12 @@ def initializationmethod(how,param_dic,dataset,time_points):
         gamma_list=[sklearn.datasets.make_spd_matrix(dx) for n in range(n_cluster)]
         sigma_list=[sklearn.datasets.make_spd_matrix(dy) for n in range(n_cluster)]
         P_list=[sklearn.datasets.make_spd_matrix(dx) for n in range(n_cluster)]
-        return {'mu':np.array(mu_list),'P':np.array(P_list), 'A':np.array(A_list),
-                'Gamma':np.array(gamma_list),'C':np.array(C_list),'Sigma':np.array(sigma_list), 
-                'weight': np.ones(n_cluster)/n_cluster}
+        init_dic={'mu':np.array(mu_list),'P':np.array(P_list), 'A':np.array(A_list),
+                  'Gamma':np.array(gamma_list),'C':np.array(C_list),'Sigma':np.array(sigma_list),
+                  'weight': np.ones(n_cluster)/n_cluster}
+        if du>0:
+            init_dic['B']=[np.vstack([np.ones((1,du)),np.random.randint(2, size=(dx-1, du))]) for n in range(n_cluster)]
+        return init_dic
     elif how=='ident':
         A_list=[-1.5*np.eye(dx) for n in range(n_cluster)]
         if dx>=dy:
@@ -217,15 +229,23 @@ def initializationmethod(how,param_dic,dataset,time_points):
         gamma_list=[np.eye(dx)*0.1 for n in range(n_cluster)]
         sigma_list=[np.eye(dy)*0.1 for n in range(n_cluster)]
         P_list=[np.eye(dx)*0.1 for n in range(n_cluster)]
-        return {'mu':np.array(mu_list),'P':np.array(P_list), 'A':np.array(A_list),
-                'Gamma':np.array(gamma_list),'C':np.array(C_list),'Sigma':np.array(sigma_list), 
-                'weight': np.ones(n_cluster)/n_cluster}
+        init_dic={'mu':np.array(mu_list),'P':np.array(P_list), 'A':np.array(A_list),
+                  'Gamma':np.array(gamma_list),'C':np.array(C_list),'Sigma':np.array(sigma_list),
+                  'weight': np.ones(n_cluster)/n_cluster}
+        if du>0:
+            if dx>=dy:
+                init_dic['B']=[np.hstack([np.hstack([np.eye(dx) for i in range(du//dx)]),np.eye(dx)[:,:du%dx-dx]]) for n in range(n_cluster)]
+            else:
+                init_dic['B']=[np.vstack([np.vstack([np.eye(du) for i in range(dx//du)]),np.eye(du)[:dx%du-du,:]]) for n in range(n_cluster)]
+            
+        return init_dic
     elif how=='kmeans':
         init_em = InitEMmlgssm(
             n_clusters=n_cluster, 
             dim_x=dx, 
             dim_y=dy, 
-            n_cpu=param_dic['NUM_CPU']
+            n_cpu=param_dic['NUM_CPU'],
+            dim_ux=du
         )
 
         return init_em.fit_tuning( 
@@ -274,6 +294,9 @@ def runVISTA(how,param_dic,dataset,time_points,**kwargs):
         
     loc : string, optional
         File location to save parameters.
+
+    control: ndarray(n_samples,n_time,dim_u,1), optional
+        control input, if any
            
     Returns
     -------
@@ -281,14 +304,25 @@ def runVISTA(how,param_dic,dataset,time_points,**kwargs):
         dictionary of lists of parameters outputted by algorithm, and other metrics
     """
     start=process_time()
+    control=[]
     if kwargs:
-        if 'inits' in kwargs:
-#             expects input of structure {'mu':np.array(mu_list),'P':np.array(P_list), 'A':np.array(A_list),
-#                 'Gamma':np.array(gamma_list),'C':np.array(C_list),'Sigma':np.array(sigma_list), 
-#                 'weight': np.ones(n_cluster)/n_cluster}
-            init_params = kwargs['inits']
+        if 'control' in kwargs:
+            control=kwargs['control']
+            if 'inits' in kwargs:
+    #             expects input of structure {'mu':np.array(mu_list),'P':np.array(P_list), 'A':np.array(A_list),
+    #                 'Gamma':np.array(gamma_list),'C':np.array(C_list),'Sigma':np.array(sigma_list), 
+    #                 'weight': np.ones(n_cluster)/n_cluster, 'B':np.array(B_list)}
+                init_params = kwargs['inits']
+            else:
+                init_params = initializationmethod(how,param_dic,dataset,time_points,control=control)
         else:
-            init_params = initializationmethod(how,param_dic,dataset,time_points)
+            if 'inits' in kwargs:
+    #             expects input of structure {'mu':np.array(mu_list),'P':np.array(P_list), 'A':np.array(A_list),
+    #                 'Gamma':np.array(gamma_list),'C':np.array(C_list),'Sigma':np.array(sigma_list), 
+    #                 'weight': np.ones(n_cluster)/n_cluster}
+                init_params = kwargs['inits']
+            else:
+                init_params = initializationmethod(how,param_dic,dataset,time_points)
 
         if 'save' in kwargs and 'loc' in kwargs:
             save=kwargs['save']
