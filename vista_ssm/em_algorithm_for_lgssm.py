@@ -54,18 +54,17 @@ class EMlgssm(KalmanFS):
         : np.ndarray(dim_x, dim_x)
         """
 
-        left_mat = np.sum(self.e_xtxt_1-self.e_xtxt[:-1], axis=0)
-        right_mat = np.sum(self.e_xtxt[:-1]*self.dt[1:,None,None], axis=0)
-
+        p1=pseudo_inverse(np.sum(self.e_xtxt[:-1]*self.dt[1:,None,None], axis=0))
+        left_a=np.sum(self.e_xtxt_1-self.e_xtxt[:-1], axis=0)
         if add_input_to_state(self.B):
-            left_mat -= np.sum(
-                np.einsum("il,nlj,nkj->nik",
-                    self.B, self.u_x[1:], self.e_xt[:-1]
-                )
-                , axis=0
-            )
-
-        return np.dot(left_mat, pseudo_inverse(right_mat))
+            p2=np.einsum("txi,tui->xu",self.e_xt[:-1],self.u_x[:-1])
+            p3=p2.T
+            p4=np.einsum("txi,tui,t->xu",self.u_x[:-1],self.u_x[:-1],1/self.dt[1:,None,None])
+            left_b=np.einsum("txi,tui,t->xu",self.e_xt[1:]-self.e_xt[:-1],self.u_x[:-1],1/self.dt[1:,None,None])
+            val=pseudo_inverse(p4-p3@p1@p2)@p3@p1
+            return np.dot(left_a,p1+p1@p2@val)-np.dot(left_b,val)
+        else:
+            return np.dot(left_a,p1)
 
 
     def _update_Gamma(self):
@@ -93,21 +92,21 @@ class EMlgssm(KalmanFS):
 
         if add_input_to_state(self.B):
             cov += np.sum(
-                - np.einsum("il,nlj,nkj->nik", 
-                    self.B, self.u_x[1:], self.e_xt[1:]
+                (- np.einsum("il,nlj,nkj->nik", 
+                    self.B, self.u_x[:-1], self.e_xt[1:]
                 )
                 - np.einsum("nkj,nlj,il->nki", 
-                    self.e_xt[1:], self.u_x[1:], self.B
+                    self.e_xt[1:], self.u_x[:-1], self.B
                 )
                 + np.einsum("il,nlj,nkj,mk->nim",
-                    self.B, self.u_x[1:], self.e_xt[:-1], self.A
+                    self.B, self.u_x[:-1], self.e_xt[:-1], self.A
                 )
                 + np.einsum("mk,nkj,nlj,il->nmi", 
-                    self.A, self.e_xt[:-1], self.u_x[1:], self.B
+                    self.A, self.e_xt[:-1], self.u_x[:-1], self.B
                 )
                 + np.einsum("mk,nkj,nlj,il->nmi", 
-                    self.B, self.u_x[1:], self.u_x[1:], self.B
-                )
+                    self.B, self.u_x[:-1], self.u_x[:-1], self.B
+                ))/self.dt[1:,None,None]
                 , axis=0
             )
 
@@ -184,25 +183,15 @@ class EMlgssm(KalmanFS):
         -------
         : np.ndarray(dim_x, dim_ux)
         """
-        
-        left_mat = np.sum(
-            np.einsum("njk,nlk->njl", 
-                self.e_xt[1:], self.u_x[1:]
-            )
-            - np.einsum("ij,njk,nlk->nil", 
-                self.A, self.e_xt[:-1], self.u_x[1:]
-            )
-            , axis=0
-        )
 
-        right_mat = np.sum(
-            np.einsum("nij,nkj->nik", 
-                self.u_x[1:], self.u_x[1:]
-            )
-            , axis=0
-        )
-
-        return np.dot(left_mat, pseudo_inverse(right_mat))
+        p1=pseudo_inverse(np.sum(self.e_xtxt[:-1]*self.dt[1:,None,None], axis=0))
+        left_a=np.sum(self.e_xtxt_1-self.e_xtxt[:-1], axis=0)
+        p2=np.einsum("txi,tui->xu",self.e_xt[:-1],self.u_x[:-1])
+        p3=p2.T
+        p4=np.einsum("txi,tui,t->xu",self.u_x[:-1],self.u_x[:-1],1/self.dt[1:,None,None])
+        left_b=np.einsum("txi,tui,t->xu",self.e_xt[1:]-self.e_xt[:-1],self.u_x[:-1],1/self.dt[1:,None,None])
+        val=pseudo_inverse(p4-p3@p1@p2)
+        return -np.dot(left_a,p1@p2@val)+np.dot(left_b,val)
 
 
     def _update_D(self):
