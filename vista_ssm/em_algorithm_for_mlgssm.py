@@ -14,10 +14,15 @@ np.seterr(over='raise')
 #https://stackoverflow.com/questions/9068478/how-to-parallelize-a-sum-calculation-in-python-numpy
 class Sum: 
     def __init__(self,dims):
-        (dx,dy)=dims
-        self.value=np.array([np.zeros((dx,1)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx))
-             ,np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),0,0
-             ,np.zeros((dy,dy)),np.zeros((dy,dx))],dtype=object)
+        (dx,dy,du,check)=dims
+        if check:
+            self.value=np.array([np.zeros((dx,1)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx))
+                 ,np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),0,0
+                 ,np.zeros((dy,dy)),np.zeros((dy,dx)),np.zeros((du,dx)),np.zeros((du,dx)),np.zeros((du,du)),np.zeros((du,dx)),np.zeros((du,dx))],dtype=object)
+        else:
+            self.value=np.array([np.zeros((dx,1)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx))
+                 ,np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),0,0
+                 ,np.zeros((dy,dy)),np.zeros((dy,dx))],dtype=object)
         self.lock = thread.allocate_lock()
         self.count = 0
 
@@ -244,6 +249,12 @@ class EMmlgssm(object):
         calcs.append(np.array(prb*(T-1)))
         calcs.append(np.sum(np.einsum("tij,tdj->tid", self.set_y[i], self.set_y[i])*dt[:,None,None],axis=0)*prb)
         calcs.append(np.sum(np.einsum("tij,tdj->tid", self.set_y[i], e_xt)*dt[:,None,None],axis=0)*prb)
+        if add_input_to_state(self.set_B):
+            calcs.append(np.sum(np.einsum("tij,tdj->tid", self.u_x[i][:-1], e_xt[:-1]),axis=0)*prb)
+            calcs.append(np.sum(np.einsum("tij,tdj->tid", self.u_x[i][:-1], e_xt[1:]),axis=0)*prb)
+            calcs.append(np.sum(np.einsum("tij,tdj->tid", self.u_x[i][:-1], self.u_x[i][:-1])/dt[1:,None,None],axis=0)*prb)
+            calcs.append(np.sum(np.einsum("tij,tdj->tid", self.u_x[i][:-1], e_xt[:-1])/dt[1:,None,None],axis=0)*prb)
+            calcs.append(np.sum(np.einsum("tij,tdj->tid", self.u_x[i][:-1], e_xt[1:])/dt[1:,None,None],axis=0)*prb)
         return np.array(calcs,dtype=object)
 
     def summers(self,num_iters,k):
