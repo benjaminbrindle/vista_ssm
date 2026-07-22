@@ -316,6 +316,7 @@ def runVISTA(how,param_dic,dataset,time_points,**kwargs):
             else:
                 init_params = initializationmethod(how,param_dic,dataset,time_points,control=control)
         else:
+            control=None
             if 'inits' in kwargs:
     #             expects input of structure {'mu':np.array(mu_list),'P':np.array(P_list), 'A':np.array(A_list),
     #                 'Gamma':np.array(gamma_list),'C':np.array(C_list),'Sigma':np.array(sigma_list), 
@@ -323,6 +324,7 @@ def runVISTA(how,param_dic,dataset,time_points,**kwargs):
                 init_params = kwargs['inits']
             else:
                 init_params = initializationmethod(how,param_dic,dataset,time_points)
+                init_params['B']=None
 
         if 'save' in kwargs and 'loc' in kwargs:
             save=kwargs['save']
@@ -332,6 +334,7 @@ def runVISTA(how,param_dic,dataset,time_points,**kwargs):
             loc=''
     else:
         init_params = initializationmethod(how,param_dic,dataset,time_points)
+        init_params['B']=None
         
     model = EMmlgssm(
         state_mats=init_params["A"], 
@@ -340,12 +343,14 @@ def runVISTA(how,param_dic,dataset,time_points,**kwargs):
         obs_covs=init_params["Sigma"], 
         init_state_means=init_params["mu"], 
         init_state_covs=init_params["P"], 
-        weights=init_params["weight"]
+        weights=init_params["weight"],
+        input_state_mats=init_params['B']
     )
 
     result = model.fit(
         Y=dataset, 
         time_points=time_points,
+        ux=control,
         max_iter=param_dic['MAX_ITER'], 
         epsilon=param_dic['EPSILON'], 
         n_cpu=param_dic['NUM_CPU'], 
