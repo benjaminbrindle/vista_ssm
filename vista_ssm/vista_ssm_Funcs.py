@@ -217,7 +217,7 @@ def initializationmethod(how,param_dic,dataset,time_points,**kwargs):
                   'Gamma':np.array(gamma_list),'C':np.array(C_list),'Sigma':np.array(sigma_list),
                   'weight': np.ones(n_cluster)/n_cluster}
         if du>0:
-            init_dic['B']=[np.vstack([np.ones((1,du)),np.random.randint(2, size=(dx-1, du))]) for n in range(n_cluster)]
+            init_dic['B']=np.array([np.vstack([np.ones((1,du)),np.random.randint(2, size=(dx-1, du))]) for n in range(n_cluster)])
         return init_dic
     elif how=='ident':
         A_list=[-1.5*np.eye(dx) for n in range(n_cluster)]
@@ -234,9 +234,9 @@ def initializationmethod(how,param_dic,dataset,time_points,**kwargs):
                   'weight': np.ones(n_cluster)/n_cluster}
         if du>0:
             if dx>=dy:
-                init_dic['B']=[np.hstack([np.hstack([np.eye(dx) for i in range(du//dx)]),np.eye(dx)[:,:du%dx-dx]]) for n in range(n_cluster)]
+                init_dic['B']=np.array([np.hstack([np.hstack([np.eye(dx) for i in range(du//dx)]),np.eye(dx)[:,:du%dx-dx]]) for n in range(n_cluster)])
             else:
-                init_dic['B']=[np.vstack([np.vstack([np.eye(du) for i in range(dx//du)]),np.eye(du)[:dx%du-du,:]]) for n in range(n_cluster)]
+                init_dic['B']=np.array([np.vstack([np.vstack([np.eye(du) for i in range(dx//du)]),np.eye(du)[:dx%du-du,:]]) for n in range(n_cluster)])
             
         return init_dic
     elif how=='kmeans':
