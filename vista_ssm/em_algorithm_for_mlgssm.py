@@ -18,7 +18,7 @@ class Sum:
         if check:
             self.value=np.array([np.zeros((dx,1)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx))
                  ,np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),0,0
-                 ,np.zeros((dy,dy)),np.zeros((dy,dx)),np.zeros((du,dx)),np.zeros((du,dx)),np.zeros((du,du)),np.zeros((du,dx)),np.zeros((du,dx))],dtype=object)
+                 ,np.zeros((dy,dy)),np.zeros((dy,dx)),np.zeros((du,dx)),np.zeros((du,du)),np.zeros((du,dx)),np.zeros((du,dx))],dtype=object)
         else:
             self.value=np.array([np.zeros((dx,1)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx))
                  ,np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),0,0
@@ -236,31 +236,32 @@ class EMmlgssm(object):
         prb = self.p_prob[i,k,0,0]
         
         calcs=[]
-        calcs.append(e_xt[0]*prb)
+        calcs.append(e_xt[0]*prb) #0
         calcs.append(e_xtxt[0]*prb)
         calcs.append(np.sum(e_xtxt*dt[:,None,None],axis=0)*prb)
         calcs.append(np.sum(e_xtxt[:-1],axis=0)*prb)
         calcs.append(np.sum(e_xtxt[:-1]/dt[1:,None,None],axis=0)*prb)
-        calcs.append(np.sum(e_xtxt[:-1]*dt[1:,None,None],axis=0)*prb)
+        calcs.append(np.sum(e_xtxt[:-1]*dt[1:,None,None],axis=0)*prb) #5
         calcs.append(np.sum(e_xtxt[1:]/dt[1:,None,None],axis=0)*prb)
         calcs.append(np.sum(e_xtxt_1,axis=0)*prb)
         calcs.append(np.sum(e_xtxt_1/dt[1:,None,None],axis=0)*prb)
         calcs.append(np.array(prb*T))
-        calcs.append(np.array(prb*(T-1)))
+        calcs.append(np.array(prb*(T-1))) #10
         calcs.append(np.sum(np.einsum("tij,tdj->tid", self.set_y[i], self.set_y[i])*dt[:,None,None],axis=0)*prb)
         calcs.append(np.sum(np.einsum("tij,tdj->tid", self.set_y[i], e_xt)*dt[:,None,None],axis=0)*prb)
         if add_input_to_state(self.set_B):
             calcs.append(np.sum(np.einsum("tij,tdj->tid", self.u_x[i][:-1], e_xt[:-1]),axis=0)*prb)
-            calcs.append(np.sum(np.einsum("tij,tdj->tid", self.u_x[i][:-1], e_xt[1:]),axis=0)*prb)
             calcs.append(np.sum(np.einsum("tij,tdj->tid", self.u_x[i][:-1], self.u_x[i][:-1])/dt[1:,None,None],axis=0)*prb)
-            calcs.append(np.sum(np.einsum("tij,tdj->tid", self.u_x[i][:-1], e_xt[:-1])/dt[1:,None,None],axis=0)*prb)
+            calcs.append(np.sum(np.einsum("tij,tdj->tid", self.u_x[i][:-1], e_xt[:-1])/dt[1:,None,None],axis=0)*prb) #15
             calcs.append(np.sum(np.einsum("tij,tdj->tid", self.u_x[i][:-1], e_xt[1:])/dt[1:,None,None],axis=0)*prb)
         return np.array(calcs,dtype=object)
 
     def summers(self,num_iters,k):
         pool = mp.Pool(processes=1)
-
-        sumArr = Sum((self.d_x,self.d_y)) #create an instance of callback class and zero the sum
+        if add_input_to_state(self.set_B):
+            sumArr= Sum((self.d_x,self.d_y,self.d_u,True))
+        else:
+            sumArr = Sum((self.d_x,self.d_y,0,False)) #create an instance of callback class and zero the sum
         for index in range(num_iters):
             singlepoolresult = pool.apply_async(self.computation,((index,k),),callback=sumArr.add)
 
@@ -326,12 +327,29 @@ class EMmlgssm(object):
                 #account for asymmetry introduced by numerical imprecision
             if not 'A' in self.fix:
                 # Update A
-                self.set_A[k] = np.dot((calc_sum[7]-calc_sum[3]), pseudo_inverse(calc_sum[5]))
+                p1=pseudo_inverse(calc_sum[5])
+                left_a=calc_sum[7]-calc_sum[3]
+                if add_input_to_state(self.set_B):
+                    p2=calc_sum[13].T
+                    p3=calc_sum[13]
+                    p4=calc_sum[14]
+                    left_b=calc_sum[16].T-calc_sum[15].T
+                    val=pseudo_inverse(p4-p3@p1@p2)@p3@p1
+                    self.set_A[k]= np.dot(left_a,p1+p1@p2@val)-np.dot(left_b,val)
+                    if not 'B' in self.fix:
+                        # Update B
+                        val=pseudo_inverse(p4-p3@p1@p2)
+                        self.set_B[k]=-np.dot(left_a,p1@p2@val)+np.dot(left_b,val)
+                else:
+                    self.set_A[k] = np.dot(left_a, p1)
             if not 'Gamma' in self.fix:
                 # Update Gamma
                 self.set_Gamma[k] = (calc_sum[6]-self.set_A[k]@(calc_sum[7].T)-calc_sum[8].T-calc_sum[7]@self.set_A[k].T
                                      -calc_sum[8]+calc_sum[4]+calc_sum[3]@self.set_A[k].T+self.set_A[k]@(calc_sum[3].T)
                                      +self.set_A[k]@calc_sum[5]@self.set_A[k].T)/calc_sum[10]
+                if add_input_to_state(self.set_B):
+                    self.set_Gamma[k]+=(-calc_sum[16].T@self.set_B[k].T-self.set_B[k]@calc_sum[16]+calc_sum[15].T@self.set_B[k].T+self.set_B[k]@calc_sum[15]
+                                        +self.set_A[k]@calc_sum[13].T@self.set_B[k].T-self.set_B[k]@calc_sum[13]@self.set_A[k].T + self.set_B[k]@calc_sum[14]@self.set_B[k].T)/calc_sum[10]
                 self.set_Gamma[k] = (self.set_Gamma[k] + self.set_Gamma[k].T)/2 
                 #account for asymmetry introduced by numerical imprecision
             if not 'C' in self.fix:
@@ -366,7 +384,9 @@ class EMmlgssm(object):
         n_param = self.d_x*(1+3*self.d_x+self.d_y)+self.d_y**2
         # Number of optional lgssm parameters
         if add_input_to_state(self.set_B):
-            n_param += 1
+            n_param += self.d_x * self.d_u
+            if 'B' in self.fix:
+                n_param -= self.d_x * self.d_u
         if add_input_to_obs(self.set_D):
             n_param += 1
         # Number of fixed parameters
