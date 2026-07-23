@@ -233,7 +233,7 @@ def initializationmethod(how,param_dic,dataset,time_points,**kwargs):
                   'Gamma':np.array(gamma_list),'C':np.array(C_list),'Sigma':np.array(sigma_list),
                   'weight': np.ones(n_cluster)/n_cluster}
         if du>0:
-            if dx>=dy:
+            if du>=dx:
                 init_dic['B']=np.array([np.hstack([np.hstack([np.eye(dx) for i in range(du//dx)]),np.eye(dx)[:,:du%dx-dx]]) for n in range(n_cluster)])
             else:
                 init_dic['B']=np.array([np.vstack([np.vstack([np.eye(du) for i in range(dx//du)]),np.eye(du)[:dx%du-du,:]]) for n in range(n_cluster)])
