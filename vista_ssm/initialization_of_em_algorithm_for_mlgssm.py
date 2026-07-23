@@ -159,7 +159,7 @@ class InitEMmlgssm(TuningEMlgssm):
     def _tuning(self, index):
 
         params_array = self.fit(
-            y=self.set_y[index], time_points=self.set_time[index], ux=self.u_x, uy=self.u_y, 
+            y=self.set_y[index], time_points=self.set_time[index], ux=self.u_x[index], uy=self.u_y, 
             max_iter=self.iter, epsilon=self.epsilon, fix_param=self.fix, 
             n_lgssm=self.m, random_state=self.seed
         )       
