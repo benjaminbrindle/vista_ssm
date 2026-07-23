@@ -59,8 +59,8 @@ class EMlgssm(KalmanFS):
         if add_input_to_state(self.B):
             p2=np.einsum("txi,tui->xu",self.e_xt[:-1],self.u_x[:-1])
             p3=p2.T
-            p4=np.einsum("txi,tui,t->xu",self.u_x[:-1],self.u_x[:-1],1/self.dt[1:,None,None])
-            left_b=np.einsum("txi,tui,t->xu",self.e_xt[1:]-self.e_xt[:-1],self.u_x[:-1],1/self.dt[1:,None,None])
+            p4=np.einsum("txi,tui,t->xu",self.u_x[:-1],self.u_x[:-1],1/self.dt[1:])
+            left_b=np.einsum("txi,tui,t->xu",self.e_xt[1:]-self.e_xt[:-1],self.u_x[:-1],1/self.dt[1:])
             val=pseudo_inverse(p4-p3@p1@p2)@p3@p1
             return np.dot(left_a,p1+p1@p2@val)-np.dot(left_b,val)
         else:
@@ -188,8 +188,8 @@ class EMlgssm(KalmanFS):
         left_a=np.sum(self.e_xtxt_1-self.e_xtxt[:-1], axis=0)
         p2=np.einsum("txi,tui->xu",self.e_xt[:-1],self.u_x[:-1])
         p3=p2.T
-        p4=np.einsum("txi,tui,t->xu",self.u_x[:-1],self.u_x[:-1],1/self.dt[1:,None,None])
-        left_b=np.einsum("txi,tui,t->xu",self.e_xt[1:]-self.e_xt[:-1],self.u_x[:-1],1/self.dt[1:,None,None])
+        p4=np.einsum("txi,tui,t->xu",self.u_x[:-1],self.u_x[:-1],1/self.dt[1:])
+        left_b=np.einsum("txi,tui,t->xu",self.e_xt[1:]-self.e_xt[:-1],self.u_x[:-1],1/self.dt[1:])
         val=pseudo_inverse(p4-p3@p1@p2)
         return -np.dot(left_a,p1@p2@val)+np.dot(left_b,val)
 
