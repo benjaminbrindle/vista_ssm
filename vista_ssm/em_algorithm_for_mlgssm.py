@@ -133,7 +133,10 @@ class EMmlgssm(object):
         )
 
         lgssm.y = self.set_y[data_num]
-        lgssm.u_x = self.u_x
+        if add_input_to_state(self.set_B):
+            lgssm.u_x = self.u_x[data_num]
+        else:
+            lgssm.u_x = None
         lgssm.u_y = self.u_y
 
         if add_input_to_state(self.set_B):
@@ -259,7 +262,7 @@ class EMmlgssm(object):
     def summers(self,num_iters,k):
         pool = mp.Pool(processes=1)
         if add_input_to_state(self.set_B):
-            sumArr= Sum((self.d_x,self.d_y,self.d_u,True))
+            sumArr= Sum((self.d_x,self.d_y,self.d_ux,True))
         else:
             sumArr = Sum((self.d_x,self.d_y,0,False)) #create an instance of callback class and zero the sum
         for index in range(num_iters):
@@ -384,9 +387,9 @@ class EMmlgssm(object):
         n_param = self.d_x*(1+3*self.d_x+self.d_y)+self.d_y**2
         # Number of optional lgssm parameters
         if add_input_to_state(self.set_B):
-            n_param += self.d_x * self.d_u
+            n_param += self.d_x * self.d_ux
             if 'B' in self.fix:
-                n_param -= self.d_x * self.d_u
+                n_param -= self.d_x * self.d_ux
         if add_input_to_obs(self.set_D):
             n_param += 1
         # Number of fixed parameters
