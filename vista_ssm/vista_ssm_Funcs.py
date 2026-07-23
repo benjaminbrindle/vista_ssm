@@ -196,7 +196,7 @@ def initializationmethod(how,param_dic,dataset,time_points,**kwargs):
     dic
         dictionary of lists of parameters. size of list depends on 'N_CLUSTER' in param_dic
     """
-    control=[]
+    control=None
     du=0
     if kwargs:
         if 'control' in kwargs:
@@ -252,7 +252,8 @@ def initializationmethod(how,param_dic,dataset,time_points,**kwargs):
             Y=dataset,
             time_points=time_points,
             fix_param=param_dic['FIX'], 
-            n_lgssm=param_dic['NUM_LGSSM']
+            n_lgssm=param_dic['NUM_LGSSM'],
+            ux=control
         )
     
 
