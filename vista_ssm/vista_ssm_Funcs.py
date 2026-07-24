@@ -245,7 +245,7 @@ def initializationmethod(how,param_dic,dataset,time_points,**kwargs):
             dim_x=dx, 
             dim_y=dy, 
             n_cpu=param_dic['NUM_CPU'],
-            dim_ux=du
+            dim_ux = du if du>0 else None
         )
 
         return init_em.fit_tuning( 
