@@ -98,11 +98,11 @@ class EMlgssm(KalmanFS):
                 - np.einsum("nkj,nlj,il->nki", 
                     self.e_xt[1:], self.u_x[:-1], self.B
                 )
-                + np.einsum("il,nlj,nkj,mk->nim",
-                    self.B, self.u_x[:-1], self.e_xt[:-1], self.A
+                + np.einsum("il,nlj,nkj,nmk->nim",
+                    self.B, self.u_x[:-1], self.e_xt[:-1], self.A_list
                 )
-                + np.einsum("mk,nkj,nlj,il->nmi", 
-                    self.A, self.e_xt[:-1], self.u_x[:-1], self.B
+                + np.einsum("nmk,nkj,nlj,il->nmi", 
+                    self.A_list, self.e_xt[:-1], self.u_x[:-1], self.B
                 )
                 + np.einsum("mk,nkj,nlj,il->nmi", 
                     self.B, self.u_x[:-1], self.u_x[:-1], self.B
