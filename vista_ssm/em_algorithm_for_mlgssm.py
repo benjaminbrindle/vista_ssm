@@ -352,7 +352,7 @@ class EMmlgssm(object):
                                      +self.set_A[k]@calc_sum[5]@self.set_A[k].T)/calc_sum[10]
                 if add_input_to_state(self.set_B):
                     self.set_Gamma[k]+=(-calc_sum[16].T@self.set_B[k].T-self.set_B[k]@calc_sum[16]+calc_sum[15].T@self.set_B[k].T+self.set_B[k]@calc_sum[15]
-                                        +self.set_A[k]@calc_sum[13].T@self.set_B[k].T-self.set_B[k]@calc_sum[13]@self.set_A[k].T + self.set_B[k]@calc_sum[14]@self.set_B[k].T)/calc_sum[10]
+                                        +self.set_A[k]@calc_sum[13].T@self.set_B[k].T+self.set_B[k]@calc_sum[13]@self.set_A[k].T + self.set_B[k]@calc_sum[14]@self.set_B[k].T)/calc_sum[10]
                 self.set_Gamma[k] = (self.set_Gamma[k] + self.set_Gamma[k].T)/2 
                 #account for asymmetry introduced by numerical imprecision
             if not 'C' in self.fix:
