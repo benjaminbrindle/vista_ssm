@@ -250,8 +250,23 @@ class EMmlgssm(object):
         calcs.append(np.sum(e_xtxt_1/dt[1:,None,None],axis=0)*prb)
         calcs.append(np.array(prb*T))
         calcs.append(np.array(prb*(T-1))) #10
-        calcs.append(np.sum(np.einsum("tij,tdj->tid", self.set_y[i], self.set_y[i])*dt[:,None,None],axis=0)*prb)
-        calcs.append(np.sum(np.einsum("tij,tdj->tid", self.set_y[i], e_xt)*dt[:,None,None],axis=0)*prb)
+        if self.na:
+            YY=np.zeros((self.d_y,self.d_y))
+            YX=np.zeros((self.d_y,self.d_x))
+            for t in range(T):
+                y_na=np.isnan(self.set_y[i][t]).flatten()
+                YY[np.ix_(y_na,y_na)] += self.set_C[k][np.ix_(y_na)]@e_xtxt[t]@self.set_C[k][np.ix_(y_na)].T + self.set_Sigma[k][np.ix_(y_na,y_na)]*dt[t]
+                YY[np.ix_(~y_na,y_na)] += self.set_y[i][t][np.ix_(~y_na)]@e_xt[t].T@self.set_C[k][np.ix_(y_na)].T*dt[t]
+                YY[np.ix_(y_na,~y_na)] += self.set_C[k][np.ix_(y_na)]@e_xt[t]@self.set_y[i][t][np.ix_(~y_na)].T*dt[t]
+                YY[np.ix_(~y_na,~y_na)] += self.set_y[i][t][np.ix_(~y_na)]@self.set_y[i][t][np.ix_(~y_na)].T*dt[t]
+
+                YX[np.ix_(y_na)] += self.set_C[k][np.ix_(y_na)]@e_xtxt[t]*dt[t]
+                YX[np.ix_(~y_na)] += self.set_y[i][t][np.ix_(~y_na)]@e_xt[t].T*dt[t]
+            calcs.append(YY)
+            calcs.append(YX)
+        else:
+            calcs.append(np.sum(np.einsum("tij,tdj->tid", self.set_y[i], self.set_y[i])*dt[:,None,None],axis=0)*prb)
+            calcs.append(np.sum(np.einsum("tij,tdj->tid", self.set_y[i], e_xt)*dt[:,None,None],axis=0)*prb)
         if add_input_to_state(self.set_B):
             calcs.append(np.sum(np.einsum("tij,tdj->tid", self.u_x[i][:-1], e_xt[:-1]),axis=0)*prb)
             calcs.append(np.sum(np.einsum("tij,tdj->tid", self.u_x[i][:-1], self.u_x[i][:-1])/dt[1:,None,None],axis=0)*prb)
@@ -466,6 +481,8 @@ class EMmlgssm(object):
         self.u_y = uy
         self.cores = n_cpu
         self.fix = fix_param
+
+        self.na = (np.array([np.isnan(Y[i]).any() for i in range(len(Y))])).any()
 
         like=[]
         like_total=[]
