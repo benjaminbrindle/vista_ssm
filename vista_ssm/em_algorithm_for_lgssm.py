@@ -120,10 +120,11 @@ class EMlgssm(KalmanFS):
         -------
         : np.ndarray(dim_y, dim_x)
         """
-
-        left_mat = np.sum(np.einsum("nij,nkj->nik", self.y, self.e_xt)*self.dt[:,None,None], axis=0)
-        right_mat = np.sum(self.e_xtxt*self.dt[:,None,None], axis=0)
-
+        if np.isnan(self.y).any():
+            left_mat = self.yx
+        else:
+            left_mat = np.sum(np.einsum("nij,nkj->nik", self.y, self.e_xt)*self.dt[:,None,None], axis=0)
+    
         if add_input_to_obs(self.D):
             left_mat -= np.sum(
                 np.einsum("ij,njk,nlk->nil", 
@@ -131,6 +132,8 @@ class EMlgssm(KalmanFS):
                 )
                 , axis=0
             )
+
+        right_mat = np.sum(self.e_xtxt*self.dt[:,None,None], axis=0)
 
         return np.dot(left_mat, pseudo_inverse(right_mat))
 
@@ -143,34 +146,36 @@ class EMlgssm(KalmanFS):
         -------
         : np.ndarray(dim_y, dim_y)
         """
-
-        cov = np.sum((
-            np.einsum("nij,nkj->nik", self.y, self.y)
-            - np.einsum("ij,njk,nlk->nil", self.C, self.e_xt, self.y) 
-            - np.einsum("nlk,njk,ij->nli", self.y, self.e_xt, self.C) 
-            + np.einsum("ij,njk,lk->nil", self.C, self.e_xtxt, self.C)
-            )*self.dt[:,None,None], axis=0
-        )
-
-        if add_input_to_obs(self.D):
-            cov += np.sum( 
-                - np.einsum("ij,njk,nlk->nil", 
-                    self.D, self.u_y, self.y
-                )
-                - np.einsum("nlk,njk,ij->nli", 
-                    self.y, self.u_y, self.D
-                )
-                + np.einsum("ij,njm,nlm,kl->nik", 
-                    self.D, self.u_y, self.e_xt, self.C
-                )
-                + np.einsum("kl,nlm,njm,ij->nki", 
-                    self.C, self.e_xt, self.u_y, self.D
-                )
-                + np.einsum("ij,njm,nlm,kl->nik", 
-                    self.D, self.u_y, self.u_y, self.D
-                )
-                , axis=0
+        if np.isnan(self.y).any():
+            cov = self.yy - self.C@self.yx.T - self.yx@self.C.T + np.sum(np.einsum("ij,njk,lk->nil", self.C, self.e_xtxt, self.C)*self.dt[:,None,None])
+        else:
+            cov = np.sum((
+                np.einsum("nij,nkj->nik", self.y, self.y)
+                - np.einsum("ij,njk,nlk->nil", self.C, self.e_xt, self.y) 
+                - np.einsum("nlk,njk,ij->nli", self.y, self.e_xt, self.C) 
+                + np.einsum("ij,njk,lk->nil", self.C, self.e_xtxt, self.C)
+                )*self.dt[:,None,None], axis=0
             )
+    
+            if add_input_to_obs(self.D):
+                cov += np.sum( 
+                    - np.einsum("ij,njk,nlk->nil", 
+                        self.D, self.u_y, self.y
+                    )
+                    - np.einsum("nlk,njk,ij->nli", 
+                        self.y, self.u_y, self.D
+                    )
+                    + np.einsum("ij,njm,nlm,kl->nik", 
+                        self.D, self.u_y, self.e_xt, self.C
+                    )
+                    + np.einsum("kl,nlm,njm,ij->nki", 
+                        self.C, self.e_xt, self.u_y, self.D
+                    )
+                    + np.einsum("ij,njm,nlm,kl->nik", 
+                        self.D, self.u_y, self.u_y, self.D
+                    )
+                    , axis=0
+                )
 
         return cov / len(self.y)
 
@@ -247,7 +252,20 @@ class EMlgssm(KalmanFS):
             (self.e_xt, self.e_xtxt, self.e_xtxt_1) = self._compute_expectations(
                 gains_s=self.gains_s, x_means_s=self.means_s, x_covs_s=self.covs_s
             )
-
+            if np.isnan(self.y).any():
+                YY=np.zeros((self.d_y,self.d_y))
+                YX=np.zeros((self.d_y,self.d_x))
+                for t in range(T):
+                    y_na=np.isnan(self.y[t]).flatten()
+                    YY[np.ix_(y_na,y_na)] += self.C[np.ix_(y_na)]@self.e_xtxt[t]@self.C[np.ix_(y_na)].T + self.Sigma[np.ix_(y_na,y_na)]*self.dt[t]
+                    YY[np.ix_(~y_na,y_na)] += self.y[t][np.ix_(~y_na)]@self.e_xt[t].T@self.C[np.ix_(y_na)].T*self.dt[t]
+                    YY[np.ix_(y_na,~y_na)] += self.C[np.ix_(y_na)]@self.e_xt[t]@self.y[t][np.ix_(~y_na)].T*self.dt[t]
+                    YY[np.ix_(~y_na,~y_na)] += self.y[t][np.ix_(~y_na)]@self.y[t][np.ix_(~y_na)].T*self.dt[t]
+    
+                    YX[np.ix_(y_na)] += self.C[np.ix_(y_na)]@self.e_xtxt[t]*self.dt[t]
+                    YX[np.ix_(~y_na)] += self.y[t][np.ix_(~y_na)]@self.e_xt[t].T*self.dt[t]
+                self.yy=YY
+                self.yx=YX
         return self
         
 
