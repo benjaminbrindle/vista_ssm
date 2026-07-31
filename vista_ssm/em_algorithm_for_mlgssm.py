@@ -262,8 +262,8 @@ class EMmlgssm(object):
 
                 YX[np.ix_(y_na)] += self.set_C[k][np.ix_(y_na)]@e_xtxt[t]*dt[t]
                 YX[np.ix_(~y_na)] += self.set_y[i][t][np.ix_(~y_na)]@e_xt[t].T*dt[t]
-            calcs.append(YY)
-            calcs.append(YX)
+            calcs.append(YY*prb)
+            calcs.append(YX*prb)
         else:
             calcs.append(np.sum(np.einsum("tij,tdj->tid", self.set_y[i], self.set_y[i])*dt[:,None,None],axis=0)*prb)
             calcs.append(np.sum(np.einsum("tij,tdj->tid", self.set_y[i], e_xt)*dt[:,None,None],axis=0)*prb)
