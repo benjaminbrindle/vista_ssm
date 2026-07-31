@@ -119,12 +119,19 @@ class KalmanFS(object):
         y_cov : np.ndarray(dim_y, dim_y)
             One-step-ahead predicted observation covariance.
         """
+        if np.isnan(self.y[t]).any():
+            y_na = np.isnan(self.y[t]).flatten()
+            y_mean = self.C[np.ix_(~y_na)]@x_mean
+            y_cov = self.C[np.ix_(~y_na)]@x_cov@self.C[np.ix_(~y_na)].T+self.Sigma_list[t][np.ix_(~y_na,~y_na)]
 
-        y_mean = np.dot(self.C, x_mean)
-        y_cov = np.dot(self.C, np.dot(x_cov, self.C.T)) + self.Sigma_list[t]
+            if add_input_to_obs(self.D):
+                y_mean += self.D[np.ix_(~y_na)]@uy_t
+        else:
+            y_mean = np.dot(self.C, x_mean)
+            y_cov = np.dot(self.C, np.dot(x_cov, self.C.T)) + self.Sigma_list[t]
 
-        if add_input_to_obs(self.D):
-            y_mean += np.dot(self.D, uy_t)
+            if add_input_to_obs(self.D):
+                y_mean += np.dot(self.D, uy_t)
 
         return (y_mean, (y_cov+y_cov.T)/2)
 
@@ -165,10 +172,15 @@ class KalmanFS(object):
         (y_mean, y_cov) = self._predict_y(
             x_mean=x_mean, x_cov=x_cov, t=t, uy_t=uy_t
         )
-
-        gain_f = np.dot(x_cov, np.dot(self.C.T, pseudo_inverse(y_cov)))
-        x_mean = x_mean + np.dot(gain_f, y_t - y_mean)
-        x_cov = x_cov - np.dot(gain_f, np.dot(self.C, x_cov))
+        if np.isnan(self.y[t]).any():
+            y_na = np.isnan(self.y[t]).flatten()
+            gain_f = x_cov@self.C[np.ix_(~y_na)].T@pseudo_inverse(y_cov)
+            x_mean = x_mean + gain_f@(y_t[np.ix_(~y_na)]-y_mean)
+            x_cov= x_cov - gain_f@self.C[np.ix_(~y_na)]@x_cov
+        else:
+            gain_f = np.dot(x_cov, np.dot(self.C.T, pseudo_inverse(y_cov)))
+            x_mean = x_mean + np.dot(gain_f, y_t - y_mean)
+            x_cov = x_cov - np.dot(gain_f, np.dot(self.C, x_cov))
         
         
 
@@ -350,7 +362,8 @@ class KalmanFS(object):
 
         for t in range(len_y-1):
             # Update 
-            (gains_f[t], x_means_f[t], x_covs_f[t]) = self._update_x( 
+            # (gains_f[t], x_means_f[t], x_covs_f[t]) = self._update_x( 
+            (_, x_means_f[t], x_covs_f[t]) = self._update_x( 
                 x_mean=x_means_p[t], x_cov=x_covs_p[t], y_t=y[t], t=t, uy_t=self.u_y[t]
             )
             # Predict
@@ -359,7 +372,8 @@ class KalmanFS(object):
             )
 
         # Update
-        (gains_f[-1], x_means_f[-1], x_covs_f[-1]) = self._update_x( 
+        # (gains_f[-1], x_means_f[-1], x_covs_f[-1]) = self._update_x(
+        (_, x_means_f[-1], x_covs_f[-1]) = self._update_x(
             x_mean=x_means_p[-1], x_cov=x_covs_p[-1], y_t=y[-1], t=len_y-1, uy_t=self.u_y[-1]
         )
             
@@ -428,22 +442,41 @@ class KalmanFS(object):
         -------
         : np.ndarray(len_y, 1)
     """
-        y_means_p = np.einsum("ij,njl->nil", self.C, x_means_p)            
-        y_covs_p = np.einsum("ij,njl,kl->nik", self.C, x_covs_p, self.C) + self.Sigma_list
-        y_covs_p = (y_covs_p+np.transpose(y_covs_p,(0,2,1)))/2
+        if np.isnan(self.y).any():
+            quadratic_form=[]
+            y_covs_p_det=[]
+            for t in range(len(self.y)):
+                y_na = np.isnan(self.y[t]).flatten()
+                y_mean = self.C[np.ix_(~y_na)]@x_means_p[t]
+                y_cov = self.C[np.ix_(~y_na)]@x_covs_p[t]@self.C[np.ix_(~y_na)].T + self.Sigma_list[t][np.ix_(~y_na,~y_na)]
+                y_cov = (y_cov+y_cov.T)/2
 
-        if add_input_to_obs(self.D):
-            y_means_p += np.einsum("ij,njl->nil", self.D, self.u_y)
+                if add_input_to_obs(self.D):
+                    y_mean += self.D[np.ix_(~y_na)]@self.u_y[t]
 
-        quadratic_form = np.einsum("nlm,nli,nij->nmj", 
-            self.y - y_means_p, pseudo_inverse(y_covs_p), self.y - y_means_p
-        )
+                quadratic_form.append((self.y[t][np.ix_(~y_na)]-y_mean).T@pseudo_inverse(y_cov)@(self.y[t][np.ix_(~y_na)]-y_mean))
+                y_covs_p_det.append(np.linalg.det(y_cov))
+            quadratic_form=np.array(quadratic_form)
+            y_covs_p_det=np.array(y_covs_p_det)
+        else:
+            y_means_p = np.einsum("ij,njl->nil", self.C, x_means_p)            
+            y_covs_p = np.einsum("ij,njl,kl->nik", self.C, x_covs_p, self.C) + self.Sigma_list
+            y_covs_p = (y_covs_p+np.transpose(y_covs_p,(0,2,1)))/2
+
+            if add_input_to_obs(self.D):
+                y_means_p += np.einsum("ij,njl->nil", self.D, self.u_y)
+
+            quadratic_form = np.einsum("nlm,nli,nij->nmj", 
+                self.y - y_means_p, pseudo_inverse(y_covs_p), self.y - y_means_p
+            )
+            
+            y_covs_p_det=np.linalg.det(y_covs_p)
 
         if log:
             # loglikelihood
             log_exp = - .5 * quadratic_form
             log_coef = - .5 * (
-                np.log(np.linalg.det(y_covs_p)).reshape(len(self.y), 1, 1)
+                np.log(y_covs_p_det).reshape(len(self.y), 1, 1)
                 + 
                 np.log(2 * np.pi) * self.d_y
             )
@@ -453,7 +486,7 @@ class KalmanFS(object):
             # likelihood
             exp = np.exp(- .5 * quadratic_form)
             coef = 1 / np.sqrt(
-                (np.linalg.det(y_covs_p)).reshape(len(self.y), 1, 1) 
+                (y_covs_p_det).reshape(len(self.y), 1, 1) 
                 * 
                 (2 * np.pi)**self.d_y
             )
