@@ -305,7 +305,7 @@ def runVISTA(how,param_dic,dataset,time_points,**kwargs):
         dictionary of lists of parameters outputted by algorithm, and other metrics
     """
     start=process_time()
-    control=[]
+    control=None
     if kwargs:
         if 'control' in kwargs:
             control=kwargs['control']
@@ -588,10 +588,11 @@ def predicted_trajectories(params,data,label,T,T_final=1,num_sam=3,legend=False,
             ax=fig.add_subplot(dy,nc,nc*i+k+1)
             for l in range(num_sam_list[k]):
                 X=data[real_ind[k][l]]
+                xnotnan=np.isfinite(X[:,i]).flatten()
                 if legend:
-                    ax.plot(tp[real_ind[k][l]],X[:,i],label=row_labels[real_ind[k][l]],alpha=plotcolor[3])
+                    ax.plot(tp[real_ind[k][l]][xnotnan],X[:,i][xnotnan],label=row_labels[real_ind[k][l]],alpha=plotcolor[3])
                 else:
-                    ax.plot(tp[real_ind[k][l]],X[:,i],label='_nolegend_',alpha=plotcolor[3])
+                    ax.plot(tp[real_ind[k][l]][xnotnan],X[:,i][xnotnan],label='_nolegend_',alpha=plotcolor[3])
             for l,j in enumerate(ax.lines):
                 colormap = plotcolor[0]
                 colors = [colormap(i) for i in np.linspace(plotcolor[1], plotcolor[2], len(ax.lines))]
