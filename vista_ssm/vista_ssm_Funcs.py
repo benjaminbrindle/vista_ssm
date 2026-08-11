@@ -306,6 +306,9 @@ def runVISTA(how,param_dic,dataset,time_points,**kwargs):
     """
     start=process_time()
     control=None
+    save=False
+    loc=''
+    
     if kwargs:
         if 'control' in kwargs:
             control=kwargs['control']
@@ -330,9 +333,6 @@ def runVISTA(how,param_dic,dataset,time_points,**kwargs):
         if 'save' in kwargs and 'loc' in kwargs:
             save=kwargs['save']
             loc=kwargs['loc']
-        else:
-            save=False
-            loc=''
     else:
         init_params = initializationmethod(how,param_dic,dataset,time_points)
         init_params['B']=None
