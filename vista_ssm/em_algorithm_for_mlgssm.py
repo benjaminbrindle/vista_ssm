@@ -255,7 +255,7 @@ class EMmlgssm(object):
             YX=np.zeros((self.d_y,self.d_x))
             for t in range(T):
                 y_na=np.isnan(self.set_y[i][t]).flatten()
-                YY[np.ix_(y_na,y_na)] += self.set_C[k][np.ix_(y_na)]@e_xtxt[t]@self.set_C[k][np.ix_(y_na)].T + self.set_Sigma[k][np.ix_(y_na,y_na)]*dt[t]
+                YY[np.ix_(y_na,y_na)] += (self.set_C[k][np.ix_(y_na)]@e_xtxt[t]@self.set_C[k][np.ix_(y_na)].T + self.set_Sigma[k][np.ix_(y_na,y_na)])*dt[t]
                 YY[np.ix_(~y_na,y_na)] += self.set_y[i][t][np.ix_(~y_na)]@e_xt[t].T@self.set_C[k][np.ix_(y_na)].T*dt[t]
                 YY[np.ix_(y_na,~y_na)] += self.set_C[k][np.ix_(y_na)]@e_xt[t]@self.set_y[i][t][np.ix_(~y_na)].T*dt[t]
                 YY[np.ix_(~y_na,~y_na)] += self.set_y[i][t][np.ix_(~y_na)]@self.set_y[i][t][np.ix_(~y_na)].T*dt[t]
