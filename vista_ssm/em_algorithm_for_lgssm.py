@@ -257,7 +257,7 @@ class EMlgssm(KalmanFS):
                 YX=np.zeros((self.d_y,self.d_x))
                 for t in range(len(self.y)):
                     y_na=np.isnan(self.y[t]).flatten()
-                    YY[np.ix_(y_na,y_na)] += self.C[np.ix_(y_na)]@self.e_xtxt[t]@self.C[np.ix_(y_na)].T + self.Sigma[np.ix_(y_na,y_na)]*self.dt[t]
+                    YY[np.ix_(y_na,y_na)] += (self.C[np.ix_(y_na)]@self.e_xtxt[t]@self.C[np.ix_(y_na)].T + self.Sigma[np.ix_(y_na,y_na)])*self.dt[t]
                     YY[np.ix_(~y_na,y_na)] += self.y[t][np.ix_(~y_na)]@self.e_xt[t].T@self.C[np.ix_(y_na)].T*self.dt[t]
                     YY[np.ix_(y_na,~y_na)] += self.C[np.ix_(y_na)]@self.e_xt[t]@self.y[t][np.ix_(~y_na)].T*self.dt[t]
                     YY[np.ix_(~y_na,~y_na)] += self.y[t][np.ix_(~y_na)]@self.y[t][np.ix_(~y_na)].T*self.dt[t]
