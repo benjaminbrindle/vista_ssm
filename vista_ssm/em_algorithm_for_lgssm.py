@@ -147,7 +147,7 @@ class EMlgssm(KalmanFS):
         : np.ndarray(dim_y, dim_y)
         """
         if np.isnan(self.y).any():
-            cov = self.yy - self.C@self.yx.T - self.yx@self.C.T + np.sum(np.einsum("ij,njk,lk->nil", self.C, self.e_xtxt, self.C)*self.dt[:,None,None])
+            cov = self.yy - self.C@self.yx.T - self.yx@self.C.T + np.sum(np.einsum("ij,njk,lk->nil", self.C, self.e_xtxt, self.C)*self.dt[:,None,None],axis=0)
         else:
             cov = np.sum((
                 np.einsum("nij,nkj->nik", self.y, self.y)
