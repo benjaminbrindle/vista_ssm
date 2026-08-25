@@ -326,6 +326,7 @@ def runVISTA(how,param_dic,dataset,time_points,**kwargs):
     #                 'Gamma':np.array(gamma_list),'C':np.array(C_list),'Sigma':np.array(sigma_list), 
     #                 'weight': np.ones(n_cluster)/n_cluster}
                 init_params = kwargs['inits']
+                init_params['B']=None
             else:
                 init_params = initializationmethod(how,param_dic,dataset,time_points)
                 init_params['B']=None
