@@ -30,6 +30,11 @@ class Sum:
         self.count += 1
         self.lock.acquire() #lock so sum is correct if two processes return at same time
         self.value = self.value + value #the actual summation
+        if self.count % 100 == 0:
+            for i in [1,2,3,4,5,6,11]:
+                self.value[i] = (self.value[i]+self.value[i].T)/2
+            if len(self.value)>14:
+                self.value[14] = (self.value[14]+self.value[14].T)/2
         self.lock.release()
 
 class EMmlgssm(object):
@@ -487,6 +492,7 @@ class EMmlgssm(object):
         like=[]
         like_total=[]
         tol=[]
+        old_params=[]
 
         for i in range(max_iter):
             
@@ -497,10 +503,17 @@ class EMmlgssm(object):
             set_Sigma = self.set_Sigma.copy()
             set_mu = self.set_mu.copy()
             set_P = self.set_P.copy()
+
+            old_param_dic={'A': set_A, 'Gamma' : set_Gamma, 'C' : set_C, 'Sigma' : set_Sigma, 'mu' : set_mu, 'P' : set_P}
+            
             if add_input_to_state(self.set_B):
                 set_B = self.set_B.copy()
+                old_param_dic['B']=set_B
             if add_input_to_obs(self.set_D):
                 set_D = self.set_D.copy()
+                old_param_dic['D']=set_D
+
+            old_params.append(old_param_dic)
 
             # Run E-step & M-step
             self.run_e_m_step()
@@ -554,7 +567,8 @@ class EMmlgssm(object):
                     'tolerance':tol,
                     'likelihood':like,
                     'total_likelihood':like_total,
-                    'iterations':i
+                    'iterations':i,
+                    'old_parameters':old_params
                 }
 
                 if bic:
@@ -594,7 +608,8 @@ class EMmlgssm(object):
             'tolerance':tol,
             'likelihood':like,
             'total_likelihood':like_total,
-            'iterations':i
+            'iterations':i,
+            'old_parameters':old_params
         }
 
         # Compute BIC
