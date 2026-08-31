@@ -296,6 +296,9 @@ def runVISTA(how,param_dic,dataset,time_points,**kwargs):
     loc : string, optional
         File location to save parameters.
 
+    verbose : bool, optional
+        If True, print message upon termination.
+
     control: ndarray(n_samples,n_time,dim_u,1), optional
         control input, if any
            
@@ -308,6 +311,7 @@ def runVISTA(how,param_dic,dataset,time_points,**kwargs):
     control=None
     save=False
     loc=''
+    verbose=True
     
     if kwargs:
         if 'control' in kwargs:
@@ -334,6 +338,8 @@ def runVISTA(how,param_dic,dataset,time_points,**kwargs):
         if 'save' in kwargs and 'loc' in kwargs:
             save=kwargs['save']
             loc=kwargs['loc']
+        if 'verbose' in kwargs:
+            verbose=kwargs['verbose']
     else:
         init_params = initializationmethod(how,param_dic,dataset,time_points)
         init_params['B']=None
@@ -359,7 +365,8 @@ def runVISTA(how,param_dic,dataset,time_points,**kwargs):
         fix_param=param_dic['FIX'],
         bic=param_dic['BIC'],
         save=save,
-        loc=loc
+        loc=loc,
+        verbose=verbose
     )
     result['runtime']=process_time()-start
     if 'labels' in kwargs:
