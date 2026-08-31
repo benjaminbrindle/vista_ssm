@@ -440,7 +440,7 @@ class EMmlgssm(object):
         return (bic,abic,aic,aicc)
 
 
-    def fit(self, Y, time_points, ux=None, uy=None, max_iter=10, epsilon=0.01, n_cpu=1, fix_param=[], bic=False, save=False, loc=''):
+    def fit(self, Y, time_points, ux=None, uy=None, max_iter=10, epsilon=0.01, n_cpu=1, fix_param=[], bic=False, save=False, loc='', verbose=True):
         """
         Run EM algorithm.
 
@@ -474,6 +474,8 @@ class EMmlgssm(object):
             If True, save parameters after each iteration to the file location given by loc.
         loc : string, default=''
             File location to save parameters.
+        verbose: bool, default=True
+            If True, print message upon termination.
         
         Returns
         -------
@@ -577,10 +579,10 @@ class EMmlgssm(object):
                 with open(loc, 'wb') as f:
                     pickle.dump(results, f, pickle.HIGHEST_PROTOCOL)
             
-            if diff < epsilon:
+            if (diff < epsilon) & verbose:
                 print('Termination tolerance achieved in '+str(i)+' iterations.')
                 break
-        if (i==(max_iter-1)):
+        if (i==(max_iter-1)) & verbose:
             print('Maximum iterations reached.')
 
         params = {
