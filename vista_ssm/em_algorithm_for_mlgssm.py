@@ -579,8 +579,9 @@ class EMmlgssm(object):
                 with open(loc, 'wb') as f:
                     pickle.dump(results, f, pickle.HIGHEST_PROTOCOL)
             
-            if (diff < epsilon) & verbose:
-                print('Termination tolerance achieved in '+str(i)+' iterations.')
+            if (diff < epsilon):
+                if verbose:
+                    print('Termination tolerance achieved in '+str(i)+' iterations.')
                 break
         if (i==(max_iter-1)) & verbose:
             print('Maximum iterations reached.')
