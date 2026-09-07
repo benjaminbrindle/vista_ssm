@@ -506,7 +506,7 @@ class EMmlgssm(object):
             set_mu = self.set_mu.copy()
             set_P = self.set_P.copy()
 
-            old_param_dic={'A': set_A, 'Gamma' : set_Gamma, 'C' : set_C, 'Sigma' : set_Sigma, 'mu' : set_mu, 'P' : set_P}
+            old_param_dic={'A': set_A, 'Gamma' : set_Gamma, 'C' : set_C, 'Sigma' : set_Sigma, 'mu' : set_mu, 'P' : set_P, 'weight' : self.set_pi.copy()}
             
             if add_input_to_state(self.set_B):
                 set_B = self.set_B.copy()
