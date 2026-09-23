@@ -280,18 +280,32 @@ class EMmlgssm(object):
         return np.array(calcs,dtype=object)
 
     def summers(self,num_iters,k):
-        pool = mp.Pool(processes=1)
+        dx=self.d_x
+        dy=self.d_y
         if add_input_to_state(self.set_B):
-            sumArr= Sum((self.d_x,self.d_y,self.d_ux,True))
+            du=self.d_ux
+            result= np.array([np.zeros((dx,1)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),0,0,np.zeros((dy,dy)),np.zeros((dy,dx)),np.zeros((du,dx)),np.zeros((du,du)),np.zeros((du,dx)),np.zeros((du,dx))],dtype=object)
         else:
-            sumArr = Sum((self.d_x,self.d_y,0,False)) #create an instance of callback class and zero the sum
-        for index in range(num_iters):
-            singlepoolresult = pool.apply_async(self.computation,((index,k),),callback=sumArr.add)
+            result= np.array([np.zeros((dx,1)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),np.zeros((dx,dx)),0,0,np.zeros((dy,dy)),np.zeros((dy,dx))],dtype=object)
+        if self.cores == 1:
+            for i in range(num_iters):
+                new_result=self.computation((i,k))
+                result+=new_result
+        elif self.cores>1:
+            pool = mp.Pool(processes=min(self.cores, num_iters))
+            if add_input_to_state(self.set_B):
+                sumArr= Sum((self.d_x,self.d_y,self.d_ux,True))
+            else:
+                sumArr = Sum((self.d_x,self.d_y,0,False)) #create an instance of callback class and zero the sum
+            for index in range(num_iters):
+                singlepoolresult = pool.apply_async(self.computation,((index,k),),callback=sumArr.add)
 
-        pool.close()
-        pool.join() #waits for all the processes to finish
+            pool.close()
+            pool.join() #waits for all the processes to finish
+            
+            result=sumArr.value
 
-        return sumArr.value
+        return result
 
     def run_e_m_step(self):
         """
