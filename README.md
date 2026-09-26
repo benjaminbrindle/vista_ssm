@@ -193,7 +193,7 @@ In the data folder we have collected the open-source datasets used in our panel[
 
 We have compiled our results from running VISTA on each of these datasets in the ![results folder](https://github.com/benjaminbrindle/vista_ssm/tree/main/results).
 
-[^1]: [Brindle, B., Hull, T.D., Malgaroli, M.†, & Charon, N.† (2024) VISTA-SSM: Varying and Irregular Sampling Time-series Analysis via State Space Models. arXiv:2410.21527](https://arxiv.org/abs/2410.21527)
+[^1]: [Brindle, B., Hull, T.D., Malgaroli, M.†, & Charon, N.† (2024) VISTA-SSM: Varying and Irregular Sampling Time-series Analysis via State Space Models. Psychological Methods.  doi:10.1037/met0000785](https://pmc.ncbi.nlm.nih.gov/articles/PMC12344451/)
 
 [^2]: [Umatani, R., Imai, T., Kawamoto, K., & Kunimasa, S. (2023). Time series clustering with
 an em algorithm for mixtures of linear gaussian state space models. Pattern
