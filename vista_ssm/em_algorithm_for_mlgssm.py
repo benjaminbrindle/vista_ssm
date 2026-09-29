@@ -30,11 +30,11 @@ class Sum:
         self.count += 1
         self.lock.acquire() #lock so sum is correct if two processes return at same time
         self.value = self.value + value #the actual summation
-        if self.count % 100 == 0:
-            for i in [1,2,3,4,5,6,11]:
-                self.value[i] = (self.value[i]+self.value[i].T)/2
-            if len(self.value)>14:
-                self.value[14] = (self.value[14]+self.value[14].T)/2
+        # if self.count % 100 == 0:
+        #     for i in [1,2,3,4,5,6,11]:
+        #         self.value[i] = (self.value[i]+self.value[i].T)/2
+        #     if len(self.value)>14:
+        #         self.value[14] = (self.value[14]+self.value[14].T)/2
         self.lock.release()
 
 class EMmlgssm(object):
