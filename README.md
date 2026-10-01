@@ -1,4 +1,9 @@
-# VISTA: Varying and Irregular Sampling Time-series Analysis
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.svg">
+    <img src="assets/banner-light.svg" alt="VISTA-SSM logo" width="480">
+  </picture>
+</p>
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/benjaminbrindle/vista_ssm/blob/main/LICENSE)
 
