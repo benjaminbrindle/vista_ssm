@@ -1,19 +1,17 @@
-from numpy.core import asarray
-from numpy.core import newaxis
-from numpy.core import sqrt
-from numpy.core import multiply
-from numpy.core import amax
-from numpy.core import matmul
-from numpy.core import divide
-from numpy.core import dot
+from numpy import asarray, newaxis, sqrt, multiply, amax, matmul, divide, dot, diag, swapaxes
+from numpy.linalg import svd, eigh
 
-from numpy.lib import diag
-from numpy.linalg import svd
-from numpy.linalg import eigh
 
-from numpy.linalg.linalg import _makearray
-from numpy.linalg.linalg import transpose
+def _makearray(a):
+    # Same helper numpy.linalg uses internally (private there, so copied here).
+    new = asarray(a)
+    wrap = getattr(a, "__array_wrap__", new.__array_wrap__)
+    return new, wrap
 
+
+def transpose(a):
+    # numpy.linalg's transpose: swap the last two axes (not numpy.transpose).
+    return swapaxes(a, -1, -2)
 
 
 def diagonalization(a):

@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 from pathlib import Path
 
 VERSION = "0.0.1"
@@ -13,6 +13,6 @@ setup(
     url = 'https://github.com/benjaminbrindle/vista_ssm',
     description = 'VISTA-SSM: Varying and Irregular Sampling Time-series Analysis via State Space Models',
     version = VERSION,
-    packages = ['vista_ssm'],
+    packages = find_packages(include=['vista_ssm', 'vista_ssm.*']),
     install_requires = INSTALL_REQUIRES
 )
