@@ -1,0 +1,3 @@
+# Repo-only artwork for the README (banner + logo). Not part of the package:
+# export-ignore keeps it out of GitHub's "Download ZIP" and release tarballs.
+assets export-ignore

@@ -1,0 +1,2 @@
+# Keep README artwork out of the pip source distribution as well.
+prune assets
