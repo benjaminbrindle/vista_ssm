@@ -5,6 +5,7 @@
   </picture>
 </p>
 
+[![Release](https://img.shields.io/github/v/release/benjaminbrindle/vista_ssm)](https://github.com/benjaminbrindle/vista_ssm/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/benjaminbrindle/vista_ssm/blob/main/LICENSE)
 
 We introduce VISTA, a Python tool based on the algorithm described in _VISTA-SSM: Varying and Irregular Sampling Time-series Analysis via State Space Models_.[^1] 
@@ -36,6 +37,11 @@ where the observations are represented by $y(t)$, $x(t)$ is an unobserved latent
 The algorithmic structure of VISTA is sketched in the schematic above. For more technical details and derivations, see our paper[^1].  
 
 ## Installation 
+Install the latest release:
+```bash
+pip install git+https://github.com/benjaminbrindle/vista_ssm@v1.0.0
+```
+Or install from source for development:
 ```bash
 git clone https://github.com/benjaminbrindle/vista_ssm
 pip install -e vista_ssm
